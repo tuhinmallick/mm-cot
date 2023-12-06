@@ -217,7 +217,7 @@ class RegStage(nn.Module):
             else:
                 proj_block = None
 
-            name = "b{}".format(i + 1)
+            name = f"b{i + 1}"
             self.add_module(
                 name, block_fn(
                     block_in_chs, out_chs, block_stride, block_dilation, bottle_ratio, group_width, se_ratio,
@@ -256,7 +256,7 @@ class RegNet(nn.Module):
         stage_params = self._get_stage_params(cfg, output_stride=output_stride, drop_path_rate=drop_path_rate)
         se_ratio = cfg['se_ratio']
         for i, stage_args in enumerate(stage_params):
-            stage_name = "s{}".format(i + 1)
+            stage_name = f"s{i + 1}"
             self.add_module(stage_name, RegStage(prev_width, **stage_args, se_ratio=se_ratio))
             prev_width = stage_args['out_chs']
             curr_stride *= stage_args['stride']
@@ -310,11 +310,18 @@ class RegNet(nn.Module):
         # Adjust the compatibility of ws and gws
         stage_widths, stage_groups = adjust_widths_groups_comp(stage_widths, stage_bottle_ratios, stage_groups)
         param_names = ['out_chs', 'stride', 'dilation', 'depth', 'bottle_ratio', 'group_width', 'drop_path_rates']
-        stage_params = [
-            dict(zip(param_names, params)) for params in
-            zip(stage_widths, stage_strides, stage_dilations, stage_depths, stage_bottle_ratios, stage_groups,
-                stage_dpr)]
-        return stage_params
+        return [
+            dict(zip(param_names, params))
+            for params in zip(
+                stage_widths,
+                stage_strides,
+                stage_dilations,
+                stage_depths,
+                stage_bottle_ratios,
+                stage_groups,
+                stage_dpr,
+            )
+        ]
 
     def get_classifier(self):
         return self.head.fc

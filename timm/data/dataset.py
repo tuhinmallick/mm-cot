@@ -94,10 +94,7 @@ class IterableImageDataset(data.IterableDataset):
             yield img, target
 
     def __len__(self):
-        if hasattr(self.parser, '__len__'):
-            return len(self.parser)
-        else:
-            return 0
+        return len(self.parser) if hasattr(self.parser, '__len__') else 0
 
     def filename(self, index, basename=False, absolute=False):
         assert False, 'Filename lookup by index not supported, use filenames().'
@@ -138,8 +135,10 @@ class AugMixDataset(torch.utils.data.Dataset):
         x, y = self.dataset[i]  # all splits share the same dataset base transform
         x_list = [self._normalize(x)]  # first split only normalizes (this is the 'clean' split)
         # run the full augmentation on the remaining splits
-        for _ in range(self.num_splits - 1):
-            x_list.append(self._normalize(self.augmentation(x)))
+        x_list.extend(
+            self._normalize(self.augmentation(x))
+            for _ in range(self.num_splits - 1)
+        )
         return tuple(x_list), y
 
     def __len__(self):

@@ -53,18 +53,11 @@ class SeparableConv2d(nn.Module):
             inplanes, inplanes, kernel_size, stride=stride,
             padding=padding, dilation=dilation, depthwise=True)
         self.bn_dw = norm_layer(inplanes)
-        if act_layer is not None:
-            self.act_dw = act_layer(inplace=True)
-        else:
-            self.act_dw = None
-
+        self.act_dw = act_layer(inplace=True) if act_layer is not None else None
         # pointwise convolution
         self.conv_pw = create_conv2d(inplanes, planes, kernel_size=1)
         self.bn_pw = norm_layer(planes)
-        if act_layer is not None:
-            self.act_pw = act_layer(inplace=True)
-        else:
-            self.act_pw = None
+        self.act_pw = act_layer(inplace=True) if act_layer is not None else None
 
     def forward(self, x):
         x = self.conv_dw(x)
@@ -148,8 +141,13 @@ class XceptionAligned(nn.Module):
             self.blocks.add_module(str(i), XceptionModule(**b, **layer_args))
             self.num_features = self.blocks[-1].out_channels
 
-        self.feature_info += [dict(
-            num_chs=self.num_features, reduction=curr_stride, module='blocks.' + str(len(self.blocks) - 1))]
+        self.feature_info += [
+            dict(
+                num_chs=self.num_features,
+                reduction=curr_stride,
+                module=f'blocks.{str(len(self.blocks) - 1)}',
+            )
+        ]
 
         self.head = ClassifierHead(
             in_chs=self.num_features, num_classes=num_classes, pool_type=global_pool, drop_rate=drop_rate)

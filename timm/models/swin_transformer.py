@@ -96,8 +96,11 @@ def window_partition(x, window_size: int):
     """
     B, H, W, C = x.shape
     x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
-    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
-    return windows
+    return (
+        x.permute(0, 1, 3, 2, 4, 5)
+        .contiguous()
+        .view(-1, window_size, window_size, C)
+    )
 
 
 def window_reverse(windows, window_size: int, H: int, W: int):
@@ -186,10 +189,7 @@ class WindowAttention(nn.Module):
             nW = mask.shape[0]
             attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(0)
             attn = attn.view(-1, self.num_heads, N, N)
-            attn = self.softmax(attn)
-        else:
-            attn = self.softmax(attn)
-
+        attn = self.softmax(attn)
         attn = self.attn_drop(attn)
 
         x = (attn @ v).transpose(1, 2).reshape(B_, N, C)
@@ -261,7 +261,9 @@ class SwinTransformerBlock(nn.Module):
             mask_windows = window_partition(img_mask, self.window_size)  # nW, window_size, window_size, 1
             mask_windows = mask_windows.view(-1, self.window_size * self.window_size)
             attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
-            attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
+            attn_mask = attn_mask.masked_fill(attn_mask != 0, -100.0).masked_fill(
+                attn_mask == 0, 0.0
+            )
         else:
             attn_mask = None
 
@@ -474,12 +476,13 @@ class SwinTransformer(nn.Module):
         # stochastic depth
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
 
-        # build layers
-        layers = []
-        for i_layer in range(self.num_layers):
-            layers += [BasicLayer(
-                dim=int(embed_dim * 2 ** i_layer),
-                input_resolution=(self.patch_grid[0] // (2 ** i_layer), self.patch_grid[1] // (2 ** i_layer)),
+        layers = [
+            BasicLayer(
+                dim=int(embed_dim * 2**i_layer),
+                input_resolution=(
+                    self.patch_grid[0] // (2**i_layer),
+                    self.patch_grid[1] // (2**i_layer),
+                ),
                 depth=depths[i_layer],
                 num_heads=num_heads[i_layer],
                 window_size=window_size,
@@ -487,11 +490,15 @@ class SwinTransformer(nn.Module):
                 qkv_bias=qkv_bias,
                 drop=drop_rate,
                 attn_drop=attn_drop_rate,
-                drop_path=dpr[sum(depths[:i_layer]):sum(depths[:i_layer + 1])],
+                drop_path=dpr[sum(depths[:i_layer]) : sum(depths[: i_layer + 1])],
                 norm_layer=norm_layer,
-                downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
-                use_checkpoint=use_checkpoint)
-            ]
+                downsample=PatchMerging
+                if (i_layer < self.num_layers - 1)
+                else None,
+                use_checkpoint=use_checkpoint,
+            )
+            for i_layer in range(self.num_layers)
+        ]
         self.layers = nn.Sequential(*layers)
 
         self.norm = norm_layer(self.num_features)
@@ -550,15 +557,16 @@ def _create_swin_transformer(variant, pretrained=False, default_cfg=None, **kwar
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
-    model = build_model_with_cfg(
-        SwinTransformer, variant, pretrained,
+    return build_model_with_cfg(
+        SwinTransformer,
+        variant,
+        pretrained,
         default_cfg=default_cfg,
         img_size=img_size,
         num_classes=num_classes,
         pretrained_filter_fn=checkpoint_filter_fn,
-        **kwargs)
-
-    return model
+        **kwargs
+    )
 
 
 

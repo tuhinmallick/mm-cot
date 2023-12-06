@@ -152,8 +152,10 @@ def _rep_vgg_bcfg(d=(4, 6, 16, 1), wf=(1., 1., 1., 1.), groups=0):
     group_size = 0
     if groups > 0:
         group_size = lambda chs, idx: chs // groups if (idx + 1) % 2 == 0 else 0
-    bcfg = tuple([ByoBlockCfg(type='rep', d=d, c=c * wf, gs=group_size) for d, c, wf in zip(d, c, wf)])
-    return bcfg
+    return tuple(
+        ByoBlockCfg(type='rep', d=d, c=c * wf, gs=group_size)
+        for d, c, wf in zip(d, c, wf)
+    )
 
 
 def interleave_blocks(
@@ -481,18 +483,17 @@ def expand_blocks_cfg(stage_blocks_cfg: Union[ByoBlockCfg, Sequence[ByoBlockCfg]
     if not isinstance(stage_blocks_cfg, Sequence):
         stage_blocks_cfg = (stage_blocks_cfg,)
     block_cfgs = []
-    for i, cfg in enumerate(stage_blocks_cfg):
+    for cfg in stage_blocks_cfg:
         block_cfgs += [replace(cfg, d=1) for _ in range(cfg.d)]
     return block_cfgs
 
 
 def num_groups(group_size, channels):
-    if not group_size:  # 0 or None
+    if not group_size:
         return 1  # normal conv with 1 group
-    else:
-        # NOTE group_size == 1 -> depthwise conv
-        assert channels % group_size == 0
-        return channels // group_size
+    # NOTE group_size == 1 -> depthwise conv
+    assert channels % group_size == 0
+    return channels // group_size
 
 
 @dataclass
@@ -928,16 +929,15 @@ def create_byob_stem(in_chs, out_chs, stem_type='', pool_type='', feat_prefix='s
         stem = RepVggBlock(in_chs, out_chs, stride=2, layers=layers)
     elif '7x7' in stem_type:
         # 7x7 stem conv as in ResNet
-        if pool_type:
-            stem = Stem(in_chs, out_chs, 7, num_rep=1, pool=pool_type, layers=layers)
-        else:
-            stem = layers.conv_norm_act(in_chs, out_chs, 7, stride=2)
+        stem = (
+            Stem(in_chs, out_chs, 7, num_rep=1, pool=pool_type, layers=layers)
+            if pool_type
+            else layers.conv_norm_act(in_chs, out_chs, 7, stride=2)
+        )
+    elif pool_type:
+        stem = Stem(in_chs, out_chs, 3, num_rep=1, pool=pool_type, layers=layers)
     else:
-        # 3x3 stem conv as in RegNet is the default
-        if pool_type:
-            stem = Stem(in_chs, out_chs, 3, num_rep=1, pool=pool_type, layers=layers)
-        else:
-            stem = layers.conv_norm_act(in_chs, out_chs, 3, stride=2)
+        stem = layers.conv_norm_act(in_chs, out_chs, 3, stride=2)
 
     if isinstance(stem, Stem):
         feature_info = [dict(f, module='.'.join([feat_prefix, f['module']])) for f in stem.feature_info]
@@ -947,7 +947,7 @@ def create_byob_stem(in_chs, out_chs, stem_type='', pool_type='', feat_prefix='s
 
 
 def reduce_feat_size(feat_size, stride=2):
-    return None if feat_size is None else tuple([s // stride for s in feat_size])
+    return None if feat_size is None else tuple(s // stride for s in feat_size)
 
 
 def override_kwargs(block_kwargs, model_kwargs):
@@ -1005,7 +1005,7 @@ def create_byob_stages(
     layers = layers or LayerFn()
     feature_info = []
     block_cfgs = [expand_blocks_cfg(s) for s in cfg.blocks]
-    depths = [sum([bc.d for bc in stage_bcs]) for stage_bcs in block_cfgs]
+    depths = [sum(bc.d for bc in stage_bcs) for stage_bcs in block_cfgs]
     dpr = [x.tolist() for x in torch.linspace(0, drop_path_rate, sum(depths)).split(depths)]
     dilation = 1
     net_stride = stem_feat['reduction']
@@ -1062,8 +1062,13 @@ def get_layer_fns(cfg: ByoModelCfg):
     conv_norm_act = partial(ConvBnAct, norm_layer=cfg.norm_layer, act_layer=act)
     attn = partial(get_attn(cfg.attn_layer), **cfg.attn_kwargs) if cfg.attn_layer else None
     self_attn = partial(get_attn(cfg.self_attn_layer), **cfg.self_attn_kwargs) if cfg.self_attn_layer else None
-    layer_fn = LayerFn(conv_norm_act=conv_norm_act, norm_act=norm_act, act=act, attn=attn, self_attn=self_attn)
-    return layer_fn
+    return LayerFn(
+        conv_norm_act=conv_norm_act,
+        norm_act=norm_act,
+        act=act,
+        attn=attn,
+        self_attn=self_attn,
+    )
 
 
 class ByobNet(nn.Module):

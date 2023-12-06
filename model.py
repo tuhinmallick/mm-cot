@@ -35,7 +35,10 @@ class JointEncoder(T5Stack):
         self.sigmoid = nn.Sigmoid()
 
         self.block = nn.ModuleList(
-            [T5Block(config, has_relative_attention_bias=bool(i == 0)) for i in range(config.num_layers)]
+            [
+                T5Block(config, has_relative_attention_bias=i == 0)
+                for i in range(config.num_layers)
+            ]
         )
         self.final_layer_norm = T5LayerNorm(config.d_model, eps=config.layer_norm_epsilon)
         self.dropout = nn.Dropout(config.dropout_rate)
@@ -61,12 +64,16 @@ class JointEncoder(T5Stack):
         )
         assert_device_map(self.device_map, len(self.block))
         self.model_parallel = True
-        self.first_device = "cpu" if "cpu" in self.device_map.keys() else "cuda:" + str(min(self.device_map.keys()))
-        self.last_device = "cuda:" + str(max(self.device_map.keys()))
+        self.first_device = (
+            "cpu"
+            if "cpu" in self.device_map.keys()
+            else f"cuda:{str(min(self.device_map.keys()))}"
+        )
+        self.last_device = f"cuda:{str(max(self.device_map.keys()))}"
         # Load onto devices
         for k, v in self.device_map.items():
             for layer in v:
-                cuda_device = "cuda:" + str(k)
+                cuda_device = f"cuda:{str(k)}"
                 self.block[layer] = self.block[layer].to(cuda_device)
 
         # Set embed_tokens to first layer
@@ -276,8 +283,8 @@ class JointEncoder(T5Stack):
             # Model Parallel: If it's the last layer for that device, put things on the next device
             if self.model_parallel:
                 for k, v in self.device_map.items():
-                    if i == v[-1] and "cuda:" + str(k) != self.last_device:
-                        hidden_states = hidden_states.to("cuda:" + str(k + 1))
+                    if i == v[-1] and f"cuda:{str(k)}" != self.last_device:
+                        hidden_states = hidden_states.to(f"cuda:{str(k + 1)}")
 
         hidden_states = self.final_layer_norm(hidden_states)
         hidden_states = self.dropout(hidden_states)
@@ -285,11 +292,11 @@ class JointEncoder(T5Stack):
         # Add last layer
         if output_hidden_states:
             all_hidden_states = all_hidden_states + (hidden_states,)
-        
+
         image_embedding = self.image_dense(image_ids)
 
         image_att, _ = self.mha_layer(hidden_states, image_embedding, image_embedding)
-        
+
         merge = torch.cat([hidden_states, image_att], dim=-1)
         gate = self.sigmoid(self.gate_dense(merge))
         hidden_states = (1 - gate) * hidden_states + gate * image_att
@@ -510,8 +517,4 @@ class T5ForMultimodalGeneration(T5ForConditionalGeneration):
         generated_sents = tokenizer.batch_decode(output, skip_special_tokens=True)
         targets = tokenizer.batch_decode(batch['labels'], skip_special_tokens=True)
 
-        result = {}
-        result['preds'] = generated_sents
-        result['targets'] = targets
-
-        return result
+        return {'preds': generated_sents, 'targets': targets}

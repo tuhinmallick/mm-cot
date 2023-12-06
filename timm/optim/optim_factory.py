@@ -99,9 +99,7 @@ def create_optimizer_v2(
     """
     opt_lower = optimizer_name.lower()
     if weight_decay and filter_bias_and_bn:
-        skip = {}
-        if hasattr(model, 'no_weight_decay'):
-            skip = model.no_weight_decay()
+        skip = model.no_weight_decay() if hasattr(model, 'no_weight_decay') else {}
         parameters = add_weight_decay(model, weight_decay, skip)
         weight_decay = 0.
     else:
@@ -112,14 +110,14 @@ def create_optimizer_v2(
     opt_args = dict(lr=learning_rate, weight_decay=weight_decay, **kwargs)
     opt_split = opt_lower.split('_')
     opt_lower = opt_split[-1]
-    if opt_lower == 'sgd' or opt_lower == 'nesterov':
+    if opt_lower in ['sgd', 'nesterov']:
         opt_args.pop('eps', None)
         optimizer = optim.SGD(parameters, momentum=momentum, nesterov=True, **opt_args)
     elif opt_lower == 'momentum':
         opt_args.pop('eps', None)
         optimizer = optim.SGD(parameters, momentum=momentum, nesterov=False, **opt_args)
     elif opt_lower == 'adam':
-        optimizer = optim.Adam(parameters, **opt_args) 
+        optimizer = optim.Adam(parameters, **opt_args)
     elif opt_lower == 'adabelief':
         optimizer = AdaBelief(parameters, rectify=False, **opt_args)
     elif opt_lower == 'adamw':
@@ -164,7 +162,7 @@ def create_optimizer_v2(
         opt_args.setdefault('betas', (0.95, 0.98))
         optimizer = FusedNovoGrad(parameters, **opt_args)
     else:
-        assert False and "Invalid optimizer"
+        assert False
         raise ValueError
 
     if len(opt_split) > 1:

@@ -80,10 +80,13 @@ class Block(nn.Module):
             else:
                 inc = in_channels
                 outc = in_channels if i < (reps - 1) else out_channels
-            rep.append(nn.ReLU(inplace=True))
-            rep.append(SeparableConv2d(inc, outc, 3, stride=1, padding=1))
-            rep.append(nn.BatchNorm2d(outc))
-
+            rep.extend(
+                (
+                    nn.ReLU(inplace=True),
+                    SeparableConv2d(inc, outc, 3, stride=1, padding=1),
+                    nn.BatchNorm2d(outc),
+                )
+            )
         if not start_with_relu:
             rep = rep[1:]
         else:

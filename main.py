@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument('--train_split', type=str, default='train', choices=['train', 'trainval', 'minitrain'])
     parser.add_argument('--val_split', type=str, default='val', choices=['test', 'val', 'minival'])
     parser.add_argument('--test_split', type=str, default='test', choices=['test', 'minitest'])
-    
+
     parser.add_argument('--use_generate', action='store_true', help='only for baseline to improve inference speed')
     parser.add_argument('--final_eval', action='store_true', help='only evaluate the model at the final epoch')
     parser.add_argument('--user_msg', type=str, default="baseline", help='experiment type in the save_dir')
@@ -48,8 +48,7 @@ def parse_args():
                         choices=['QCM-A', 'QCM-E', 'QCM-LE', 'QCMG-A', 'QCM-LEA', 'QCM-ALE'])
     parser.add_argument('--seed', type=int, default=42, help='random seed')
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
         
 def T5Trainer(
     dataframe, args,
@@ -57,7 +56,7 @@ def T5Trainer(
     torch.manual_seed(args.seed)  # pytorch random seed
     np.random.seed(args.seed)  # numpy random seed
     torch.backends.cudnn.deterministic = True
-    
+
     if args.evaluate_dir is not None:
         args.model = args.evaluate_dir
 
@@ -70,7 +69,7 @@ def T5Trainer(
     train_qids = qids['train']
     test_qids = qids['test']
     val_qids = qids['val']
-    
+
     if args.evaluate_dir is not None:
         save_dir = args.evaluate_dir
     else:
@@ -137,7 +136,7 @@ def T5Trainer(
             args,
             args.eval_le,
         )
-        
+
         test_set = ScienceQADatasetStd(
             problems,
             test_qids,
@@ -153,11 +152,8 @@ def T5Trainer(
     def extract_ans(ans):
         pattern = re.compile(r'The answer is \(([A-Z])\)')
         res = pattern.findall(ans)
-        
-        if len(res) == 1:
-            answer = res[0]  # 'A', 'B', ...
-        else:
-            answer = "FAILED" 
+
+        answer = res[0] if len(res) == 1 else "FAILED"
         return answer  
 
     # accuracy for answer inference
@@ -182,7 +178,7 @@ def T5Trainer(
             if reference == best_option:
                 correct +=1 
         return {'accuracy': 1.0*correct/len(targets)}
-    
+
     # rougel for rationale generation
     metric = evaluate.load("rouge")
     def postprocess_text(preds, labels):
@@ -216,13 +212,13 @@ def T5Trainer(
     if args.final_eval:
         training_args = Seq2SeqTrainingArguments(
             save_dir,
-            do_train=True if args.evaluate_dir is None else False,
+            do_train=args.evaluate_dir is None,
             do_eval=False,
             evaluation_strategy="no",
             logging_strategy="steps",
             save_strategy="epoch",
-            save_total_limit = 2,
-            learning_rate= args.lr,
+            save_total_limit=2,
+            learning_rate=args.lr,
             eval_accumulation_steps=args.eval_acc,
             per_device_train_batch_size=args.bs,
             per_device_eval_batch_size=args.eval_bs,
@@ -232,23 +228,24 @@ def T5Trainer(
             generation_max_length=args.output_len,
             report_to="none",
         )
-    # evaluate at each epoch
     else:
         training_args = Seq2SeqTrainingArguments(
             save_dir,
-            do_train=True if args.evaluate_dir is None else False,
+            do_train=args.evaluate_dir is None,
             do_eval=True,
             evaluation_strategy="epoch",
             logging_strategy="steps",
             save_strategy="epoch",
-            save_total_limit = 2,
-            learning_rate= args.lr,
+            save_total_limit=2,
+            learning_rate=args.lr,
             eval_accumulation_steps=args.eval_acc,
             per_device_train_batch_size=args.bs,
             per_device_eval_batch_size=args.eval_bs,
             weight_decay=0.01,
             num_train_epochs=args.epoch,
-            metric_for_best_model="accuracy" if args.prompt_format == "QCMG-A" or args.prompt_format == "QCM-A" else "rougeL",
+            metric_for_best_model="accuracy"
+            if args.prompt_format in ["QCMG-A", "QCM-A"]
+            else "rougeL",
             predict_with_generate=args.use_generate,
             generation_max_length=args.output_len,
             load_best_model_at_end=True,
@@ -262,18 +259,20 @@ def T5Trainer(
         eval_dataset=eval_set,
         data_collator=datacollator,
         tokenizer=tokenizer,
-        compute_metrics = compute_metrics_acc if args.prompt_format == "QCMG-A" or args.prompt_format == "QCM-A" else compute_metrics_rougel
+        compute_metrics=compute_metrics_acc
+        if args.prompt_format in ["QCMG-A", "QCM-A"]
+        else compute_metrics_rougel,
     )
 
     if args.evaluate_dir is None:
         trainer.train()
         trainer.save_model(save_dir)
-        
+
     metrics = trainer.evaluate(eval_dataset = test_set, max_length=args.output_len)
     trainer.log_metrics("test", metrics)
     trainer.save_metrics("test", metrics)
 
-    predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len) 
+    predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len)
     if trainer.is_world_process_zero():
         if args.use_generate:
             preds, targets = predict_results.predictions, predict_results.label_ids
@@ -292,7 +291,7 @@ def T5Trainer(
         results_ans = {}
         results_rationale = {}
         results_reference = {}
-        
+
         num_fail = 0
         for idx, qid in enumerate(test_qids):
             pred = preds[int(idx)]
@@ -320,9 +319,9 @@ def T5Trainer(
         output_prediction_file = os.path.join(save_dir,"predictions_ans_test.json")
         with open(output_prediction_file, "w") as writer:
             writer.write(json.dumps(output_data, indent=4))
-    
+
     # generate the rationale for the eval set
-    if args.prompt_format == "QCM-LE" or args.prompt_format == "QCM-E":
+    if args.prompt_format in ["QCM-LE", "QCM-E"]:
         torch.cuda.empty_cache()
         del predict_results, preds, targets
         predict_results = trainer.predict(test_dataset=eval_set, max_length=args.output_len) 

@@ -53,10 +53,7 @@ class SGDP(Optimizer):
         return perturb, wd
 
     def step(self, closure=None):
-        loss = None
-        if closure is not None:
-            loss = closure()
-
+        loss = closure() if closure is not None else None
         for group in self.param_groups:
             weight_decay = group['weight_decay']
             momentum = group['momentum']
@@ -76,11 +73,7 @@ class SGDP(Optimizer):
                 # SGD
                 buf = state['momentum']
                 buf.mul_(momentum).add_(1 - dampening, grad)
-                if nesterov:
-                    d_p = grad + momentum * buf
-                else:
-                    d_p = buf
-
+                d_p = grad + momentum * buf if nesterov else buf
                 # Projection
                 wd_ratio = 1
                 if len(p.shape) > 1:

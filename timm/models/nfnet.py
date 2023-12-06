@@ -175,19 +175,34 @@ class NfCfg:
 def _nfres_cfg(
         depths, channels=(256, 512, 1024, 2048), group_size=None, act_layer='relu', attn_layer=None, attn_kwargs=None):
     attn_kwargs = attn_kwargs or {}
-    cfg = NfCfg(
-        depths=depths, channels=channels, stem_type='7x7_pool', stem_chs=64, bottle_ratio=0.25,
-        group_size=group_size, act_layer=act_layer, attn_layer=attn_layer, attn_kwargs=attn_kwargs)
-    return cfg
+    return NfCfg(
+        depths=depths,
+        channels=channels,
+        stem_type='7x7_pool',
+        stem_chs=64,
+        bottle_ratio=0.25,
+        group_size=group_size,
+        act_layer=act_layer,
+        attn_layer=attn_layer,
+        attn_kwargs=attn_kwargs,
+    )
 
 
 def _nfreg_cfg(depths, channels=(48, 104, 208, 440)):
     num_features = 1280 * channels[-1] // 440
     attn_kwargs = dict(rd_ratio=0.5)
-    cfg = NfCfg(
-        depths=depths, channels=channels, stem_type='3x3', group_size=8, width_factor=0.75, bottle_ratio=2.25,
-        num_features=num_features, reg=True, attn_layer='se', attn_kwargs=attn_kwargs)
-    return cfg
+    return NfCfg(
+        depths=depths,
+        channels=channels,
+        stem_type='3x3',
+        group_size=8,
+        width_factor=0.75,
+        bottle_ratio=2.25,
+        num_features=num_features,
+        reg=True,
+        attn_layer='se',
+        attn_kwargs=attn_kwargs,
+    )
 
 
 def _nfnet_cfg(
@@ -195,19 +210,38 @@ def _nfnet_cfg(
         act_layer='gelu', attn_layer='se', attn_kwargs=None):
     num_features = int(channels[-1] * feat_mult)
     attn_kwargs = attn_kwargs if attn_kwargs is not None else dict(rd_ratio=0.5)
-    cfg = NfCfg(
-        depths=depths, channels=channels, stem_type='deep_quad', stem_chs=128, group_size=group_size,
-        bottle_ratio=bottle_ratio, extra_conv=True, num_features=num_features, act_layer=act_layer,
-        attn_layer=attn_layer, attn_kwargs=attn_kwargs)
-    return cfg
+    return NfCfg(
+        depths=depths,
+        channels=channels,
+        stem_type='deep_quad',
+        stem_chs=128,
+        group_size=group_size,
+        bottle_ratio=bottle_ratio,
+        extra_conv=True,
+        num_features=num_features,
+        act_layer=act_layer,
+        attn_layer=attn_layer,
+        attn_kwargs=attn_kwargs,
+    )
 
 
 def _dm_nfnet_cfg(depths, channels=(256, 512, 1536, 1536), act_layer='gelu', skipinit=True):
-    cfg = NfCfg(
-        depths=depths, channels=channels, stem_type='deep_quad', stem_chs=128, group_size=128,
-        bottle_ratio=0.5, extra_conv=True, gamma_in_act=True, same_padding=True, skipinit=skipinit,
-        num_features=int(channels[-1] * 2.0), act_layer=act_layer, attn_layer='se', attn_kwargs=dict(rd_ratio=0.5))
-    return cfg
+    return NfCfg(
+        depths=depths,
+        channels=channels,
+        stem_type='deep_quad',
+        stem_chs=128,
+        group_size=128,
+        bottle_ratio=0.5,
+        extra_conv=True,
+        gamma_in_act=True,
+        same_padding=True,
+        skipinit=skipinit,
+        num_features=int(channels[-1] * 2.0),
+        act_layer=act_layer,
+        attn_layer='se',
+        attn_kwargs=dict(rd_ratio=0.5),
+    )
 
 
 
@@ -354,16 +388,10 @@ class NormFreeBlock(nn.Module):
         else:
             self.act2b = None
             self.conv2b = None
-        if reg and attn_layer is not None:
-            self.attn = attn_layer(mid_chs)  # RegNet blocks apply attn btw conv2 & 3
-        else:
-            self.attn = None
+        self.attn = attn_layer(mid_chs) if reg and attn_layer is not None else None
         self.act3 = act_layer()
         self.conv3 = conv_layer(mid_chs, out_chs, 1, gain_init=1. if skipinit else 0.)
-        if not reg and attn_layer is not None:
-            self.attn_last = attn_layer(out_chs)  # ResNet blocks apply attn after conv3
-        else:
-            self.attn_last = None
+        self.attn_last = None if reg or attn_layer is None else attn_layer(out_chs)
         self.drop_path = DropPath(drop_path_rate) if drop_path_rate > 0 else nn.Identity()
         self.skipinit_gain = nn.Parameter(torch.tensor(0.)) if skipinit else None
 
@@ -401,7 +429,7 @@ def create_stem(in_chs, out_chs, stem_type='', conv_layer=None, act_layer=None, 
     if 'deep' in stem_type:
         if 'quad' in stem_type:
             # 4 deep conv stack as in NFNet-F models
-            assert not 'pool' in stem_type
+            assert 'pool' not in stem_type
             stem_chs = (out_chs // 8, out_chs // 4, out_chs // 2, out_chs)
             strides = (2, 1, 1, 2)
             stem_stride = 4
@@ -545,7 +573,11 @@ class NormFreeNet(nn.Module):
             # The paper NFRegNet models have an EfficientNet-like final head convolution.
             self.num_features = make_divisible(cfg.width_factor * cfg.num_features, cfg.ch_div)
             self.final_conv = conv_layer(prev_chs, self.num_features, 1)
-            self.feature_info[-1] = dict(num_chs=self.num_features, reduction=net_stride, module=f'final_conv')
+            self.feature_info[-1] = dict(
+                num_chs=self.num_features,
+                reduction=net_stride,
+                module='final_conv',
+            )
         else:
             self.num_features = prev_chs
             self.final_conv = nn.Identity()

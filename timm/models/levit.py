@@ -270,11 +270,10 @@ class Attention(nn.Module):
     def get_attention_biases(self, device: torch.device) -> torch.Tensor:
         if self.training:
             return self.attention_biases[:, self.attention_bias_idxs]
-        else:
-            device_key = str(device)
-            if device_key not in self.ab:
-                self.ab[device_key] = self.attention_biases[:, self.attention_bias_idxs]
-            return self.ab[device_key]
+        device_key = str(device)
+        if device_key not in self.ab:
+            self.ab[device_key] = self.attention_biases[:, self.attention_bias_idxs]
+        return self.ab[device_key]
 
     def forward(self, x):  # x (B,C,H,W)
         if self.use_conv:
@@ -342,15 +341,14 @@ class AttentionSubsample(nn.Module):
         N_ = len(points_)
         attention_offsets = {}
         idxs = []
-        for p1 in points_:
-            for p2 in points:
-                size = 1
-                offset = (
-                    abs(p1[0] * stride - p2[0] + (size - 1) / 2),
-                    abs(p1[1] * stride - p2[1] + (size - 1) / 2))
-                if offset not in attention_offsets:
-                    attention_offsets[offset] = len(attention_offsets)
-                idxs.append(attention_offsets[offset])
+        size = 1
+        for p1, p2 in itertools.product(points_, points):
+            offset = (
+                abs(p1[0] * stride - p2[0] + (size - 1) / 2),
+                abs(p1[1] * stride - p2[1] + (size - 1) / 2))
+            if offset not in attention_offsets:
+                attention_offsets[offset] = len(attention_offsets)
+            idxs.append(attention_offsets[offset])
         self.attention_biases = nn.Parameter(torch.zeros(num_heads, len(attention_offsets)))
         self.register_buffer('attention_bias_idxs', torch.LongTensor(idxs).view(N_, N))
         self.ab = {}  # per-device attention_biases cache
@@ -364,11 +362,10 @@ class AttentionSubsample(nn.Module):
     def get_attention_biases(self, device: torch.device) -> torch.Tensor:
         if self.training:
             return self.attention_biases[:, self.attention_bias_idxs]
-        else:
-            device_key = str(device)
-            if device_key not in self.ab:
-                self.ab[device_key] = self.attention_biases[:, self.attention_bias_idxs]
-            return self.ab[device_key]
+        device_key = str(device)
+        if device_key not in self.ab:
+            self.ab[device_key] = self.attention_biases[:, self.attention_bias_idxs]
+        return self.ab[device_key]
 
     def forward(self, x):
         if self.use_conv:
@@ -499,10 +496,7 @@ class Levit(nn.Module):
         return {x for x in self.state_dict().keys() if 'attention_biases' in x}
 
     def get_classifier(self):
-        if self.head_dist is None:
-            return self.head
-        else:
-            return self.head, self.head_dist
+        return self.head if self.head_dist is None else (self.head, self.head_dist)
 
     def reset_classifier(self, num_classes, global_pool='', distillation=None):
         self.num_classes = num_classes
@@ -552,12 +546,12 @@ def create_levit(variant, pretrained=False, default_cfg=None, fuse=False, **kwar
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
     model_cfg = dict(**model_cfgs[variant], **kwargs)
-    model = build_model_with_cfg(
-        Levit, variant, pretrained,
+    return build_model_with_cfg(
+        Levit,
+        variant,
+        pretrained,
         default_cfg=default_cfgs[variant],
         pretrained_filter_fn=checkpoint_filter_fn,
-        **model_cfg)
-    #if fuse:
-    #    utils.replace_batchnorm(model)
-    return model
+        **model_cfg
+    )
 

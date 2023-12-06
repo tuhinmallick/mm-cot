@@ -162,7 +162,7 @@ class TNT(nn.Module):
         self.num_patches = num_patches
         new_patch_size = self.pixel_embed.new_patch_size
         num_pixel = new_patch_size[0] * new_patch_size[1]
-        
+
         self.norm1_proj = norm_layer(num_pixel * in_dim)
         self.proj = nn.Linear(num_pixel * in_dim, embed_dim)
         self.norm2_proj = norm_layer(embed_dim)
@@ -173,12 +173,22 @@ class TNT(nn.Module):
         self.pos_drop = nn.Dropout(p=drop_rate)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
-        blocks = []
-        for i in range(depth):
-            blocks.append(Block(
-                dim=embed_dim, in_dim=in_dim, num_pixel=num_pixel, num_heads=num_heads, in_num_head=in_num_head,
-                mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, drop=drop_rate, attn_drop=attn_drop_rate,
-                drop_path=dpr[i], norm_layer=norm_layer))
+        blocks = [
+            Block(
+                dim=embed_dim,
+                in_dim=in_dim,
+                num_pixel=num_pixel,
+                num_heads=num_heads,
+                in_num_head=in_num_head,
+                mlp_ratio=mlp_ratio,
+                qkv_bias=qkv_bias,
+                drop=drop_rate,
+                attn_drop=attn_drop_rate,
+                drop_path=dpr[i],
+                norm_layer=norm_layer,
+            )
+            for i in range(depth)
+        ]
         self.blocks = nn.ModuleList(blocks)
         self.norm = norm_layer(embed_dim)
 
@@ -242,12 +252,14 @@ def _create_tnt(variant, pretrained=False, **kwargs):
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
-    model = build_model_with_cfg(
-        TNT, variant, pretrained,
+    return build_model_with_cfg(
+        TNT,
+        variant,
+        pretrained,
         default_cfg=default_cfgs[variant],
         pretrained_filter_fn=checkpoint_filter_fn,
-        **kwargs)
-    return model
+        **kwargs
+    )
 
 
 @register_model
@@ -255,8 +267,7 @@ def tnt_s_patch16_224(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=16, embed_dim=384, in_dim=24, depth=12, num_heads=6, in_num_head=4,
         qkv_bias=False, **kwargs)
-    model = _create_tnt('tnt_s_patch16_224', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_tnt('tnt_s_patch16_224', pretrained=pretrained, **model_cfg)
 
 
 @register_model
@@ -264,5 +275,4 @@ def tnt_b_patch16_224(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=16, embed_dim=640, in_dim=40, depth=12, num_heads=10, in_num_head=4,
         qkv_bias=False, **kwargs)
-    model = _create_tnt('tnt_b_patch16_224', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_tnt('tnt_b_patch16_224', pretrained=pretrained, **model_cfg)

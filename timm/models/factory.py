@@ -8,10 +8,9 @@ def split_model_name(model_name):
     model_split = model_name.split(':', 1)
     if len(model_split) == 1:
         return '', model_split[0]
-    else:
-        source_name, model_name = model_split
-        assert source_name in ('timm', 'hf_hub')
-        return source_name, model_name
+    source_name, model_name = model_split
+    assert source_name in ('timm', 'hf_hub')
+    return source_name, model_name
 
 
 def safe_model_name(model_name, remove_source=True):
@@ -75,7 +74,7 @@ def create_model(
     if is_model(model_name):
         create_fn = model_entrypoint(model_name)
     else:
-        raise RuntimeError('Unknown model (%s)' % model_name)
+        raise RuntimeError(f'Unknown model ({model_name})')
 
     with set_layer_config(scriptable=scriptable, exportable=exportable, no_jit=no_jit):
         model = create_fn(pretrained=pretrained, **kwargs)

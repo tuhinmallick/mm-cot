@@ -91,10 +91,7 @@ class SelectSeq(nn.Module):
         pass
 
     def forward(self, x) -> torch.Tensor:
-        if self.mode == 'index':
-            return x[self.index]
-        else:
-            return torch.cat(x, dim=1)
+        return x[self.index] if self.mode == 'index' else torch.cat(x, dim=1)
 
 
 def conv_bn(in_chs, out_chs, k=3, stride=1, padding=None, dilation=1):
@@ -125,16 +122,15 @@ class SelecSLSBlock(nn.Module):
     def forward(self, x: List[torch.Tensor]) -> List[torch.Tensor]:
         if not isinstance(x, list):
             x = [x]
-        assert len(x) in [1, 2]
+        assert len(x) in {1, 2}
 
         d1 = self.conv1(x[0])
         d2 = self.conv3(self.conv2(d1))
         d3 = self.conv5(self.conv4(d2))
-        if self.is_first:
-            out = self.conv6(torch.cat([d1, d2, d3], 1))
-            return [out, out]
-        else:
+        if not self.is_first:
             return [self.conv6(torch.cat([d1, d2, d3, x[1]], 1)), x[1]]
+        out = self.conv6(torch.cat([d1, d2, d3], 1))
+        return [out, out]
 
 
 class SelecSLS(nn.Module):
@@ -315,7 +311,7 @@ def _create_selecsls(variant, pretrained, **kwargs):
             dict(num_chs=1280, reduction=64, module='head.3')
         ])
     else:
-        raise ValueError('Invalid net configuration ' + variant + ' !!!')
+        raise ValueError(f'Invalid net configuration {variant} !!!')
     cfg['feature_info'] = feature_info
 
     # this model can do 6 feature levels by default, unlike most others, leave as 0-4 to avoid surprises?

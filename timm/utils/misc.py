@@ -13,6 +13,8 @@ def natural_key(string_):
 def add_bool_arg(parser, name, default=False, help=''):
     dest_name = name.replace('-', '_')
     group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument('--' + name, dest=dest_name, action='store_true', help=help)
-    group.add_argument('--no-' + name, dest=dest_name, action='store_false', help=help)
+    group.add_argument(f'--{name}', dest=dest_name, action='store_true', help=help)
+    group.add_argument(
+        f'--no-{name}', dest=dest_name, action='store_false', help=help
+    )
     parser.set_defaults(**{dest_name: default})
