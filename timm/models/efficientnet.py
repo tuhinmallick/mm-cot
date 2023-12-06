@@ -451,8 +451,16 @@ class EfficientNet(nn.Module):
     def as_sequential(self):
         layers = [self.conv_stem, self.bn1, self.act1]
         layers.extend(self.blocks)
-        layers.extend([self.conv_head, self.bn2, self.act2, self.global_pool])
-        layers.extend([nn.Dropout(self.drop_rate), self.classifier])
+        layers.extend(
+            [
+                self.conv_head,
+                self.bn2,
+                self.act2,
+                self.global_pool,
+                nn.Dropout(self.drop_rate),
+                self.classifier,
+            ]
+        )
         return nn.Sequential(*layers)
 
     def get_classifier(self):
@@ -591,8 +599,7 @@ def _gen_mnasnet_a1(variant, channel_multiplier=1.0, pretrained=False, **kwargs)
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_mnasnet_b1(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
@@ -627,8 +634,7 @@ def _gen_mnasnet_b1(variant, channel_multiplier=1.0, pretrained=False, **kwargs)
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_mnasnet_small(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
@@ -656,8 +662,7 @@ def _gen_mnasnet_small(variant, channel_multiplier=1.0, pretrained=False, **kwar
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_mobilenet_v2(
@@ -686,8 +691,7 @@ def _gen_mobilenet_v2(
         act_layer=resolve_act_layer(kwargs, 'relu6'),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_fbnetc(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
@@ -716,8 +720,7 @@ def _gen_fbnetc(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_spnasnet(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
@@ -751,8 +754,7 @@ def _gen_spnasnet(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnet(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
@@ -798,8 +800,7 @@ def _gen_efficientnet(variant, channel_multiplier=1.0, depth_multiplier=1.0, pre
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnet_edge(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
@@ -828,8 +829,7 @@ def _gen_efficientnet_edge(variant, channel_multiplier=1.0, depth_multiplier=1.0
         act_layer=resolve_act_layer(kwargs, 'relu'),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnet_condconv(
@@ -859,8 +859,7 @@ def _gen_efficientnet_condconv(
         act_layer=resolve_act_layer(kwargs, 'swish'),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnet_lite(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
@@ -900,8 +899,7 @@ def _gen_efficientnet_lite(variant, channel_multiplier=1.0, depth_multiplier=1.0
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnetv2_base(
@@ -929,8 +927,7 @@ def _gen_efficientnetv2_base(
         act_layer=resolve_act_layer(kwargs, 'silu'),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnetv2_s(
@@ -968,8 +965,7 @@ def _gen_efficientnetv2_s(
         act_layer=resolve_act_layer(kwargs, 'silu'),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnetv2_m(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
@@ -998,8 +994,7 @@ def _gen_efficientnetv2_m(variant, channel_multiplier=1.0, depth_multiplier=1.0,
         act_layer=resolve_act_layer(kwargs, 'silu'),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_efficientnetv2_l(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
@@ -1028,8 +1023,7 @@ def _gen_efficientnetv2_l(variant, channel_multiplier=1.0, depth_multiplier=1.0,
         act_layer=resolve_act_layer(kwargs, 'silu'),
         **kwargs,
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_mixnet_s(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
@@ -1061,8 +1055,7 @@ def _gen_mixnet_s(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 def _gen_mixnet_m(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
@@ -1094,29 +1087,25 @@ def _gen_mixnet_m(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrai
         norm_layer=partial(nn.BatchNorm2d, **resolve_bn_args(kwargs)),
         **kwargs
     )
-    model = _create_effnet(variant, pretrained, **model_kwargs)
-    return model
+    return _create_effnet(variant, pretrained, **model_kwargs)
 
 
 @register_model
 def mnasnet_050(pretrained=False, **kwargs):
     """ MNASNet B1, depth multiplier of 0.5. """
-    model = _gen_mnasnet_b1('mnasnet_050', 0.5, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_b1('mnasnet_050', 0.5, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def mnasnet_075(pretrained=False, **kwargs):
     """ MNASNet B1, depth multiplier of 0.75. """
-    model = _gen_mnasnet_b1('mnasnet_075', 0.75, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_b1('mnasnet_075', 0.75, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def mnasnet_100(pretrained=False, **kwargs):
     """ MNASNet B1, depth multiplier of 1.0. """
-    model = _gen_mnasnet_b1('mnasnet_100', 1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_b1('mnasnet_100', 1.0, pretrained=pretrained, **kwargs)
 
 
 @register_model
@@ -1128,29 +1117,25 @@ def mnasnet_b1(pretrained=False, **kwargs):
 @register_model
 def mnasnet_140(pretrained=False, **kwargs):
     """ MNASNet B1,  depth multiplier of 1.4 """
-    model = _gen_mnasnet_b1('mnasnet_140', 1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_b1('mnasnet_140', 1.4, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def semnasnet_050(pretrained=False, **kwargs):
     """ MNASNet A1 (w/ SE), depth multiplier of 0.5 """
-    model = _gen_mnasnet_a1('semnasnet_050', 0.5, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_a1('semnasnet_050', 0.5, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def semnasnet_075(pretrained=False, **kwargs):
     """ MNASNet A1 (w/ SE),  depth multiplier of 0.75. """
-    model = _gen_mnasnet_a1('semnasnet_075', 0.75, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_a1('semnasnet_075', 0.75, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def semnasnet_100(pretrained=False, **kwargs):
     """ MNASNet A1 (w/ SE), depth multiplier of 1.0. """
-    model = _gen_mnasnet_a1('semnasnet_100', 1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_a1('semnasnet_100', 1.0, pretrained=pretrained, **kwargs)
 
 
 @register_model
@@ -1162,45 +1147,57 @@ def mnasnet_a1(pretrained=False, **kwargs):
 @register_model
 def semnasnet_140(pretrained=False, **kwargs):
     """ MNASNet A1 (w/ SE), depth multiplier of 1.4. """
-    model = _gen_mnasnet_a1('semnasnet_140', 1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_a1('semnasnet_140', 1.4, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def mnasnet_small(pretrained=False, **kwargs):
     """ MNASNet Small,  depth multiplier of 1.0. """
-    model = _gen_mnasnet_small('mnasnet_small', 1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mnasnet_small(
+        'mnasnet_small', 1.0, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def mobilenetv2_100(pretrained=False, **kwargs):
     """ MobileNet V2 w/ 1.0 channel multiplier """
-    model = _gen_mobilenet_v2('mobilenetv2_100', 1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mobilenet_v2(
+        'mobilenetv2_100', 1.0, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def mobilenetv2_140(pretrained=False, **kwargs):
     """ MobileNet V2 w/ 1.4 channel multiplier """
-    model = _gen_mobilenet_v2('mobilenetv2_140', 1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mobilenet_v2(
+        'mobilenetv2_140', 1.4, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def mobilenetv2_110d(pretrained=False, **kwargs):
     """ MobileNet V2 w/ 1.1 channel, 1.2 depth multipliers"""
-    model = _gen_mobilenet_v2(
-        'mobilenetv2_110d', 1.1, depth_multiplier=1.2, fix_stem_head=True, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mobilenet_v2(
+        'mobilenetv2_110d',
+        1.1,
+        depth_multiplier=1.2,
+        fix_stem_head=True,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def mobilenetv2_120d(pretrained=False, **kwargs):
     """ MobileNet V2 w/ 1.2 channel, 1.4 depth multipliers """
-    model = _gen_mobilenet_v2(
-        'mobilenetv2_120d', 1.2, depth_multiplier=1.4, fix_stem_head=True, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mobilenet_v2(
+        'mobilenetv2_120d',
+        1.2,
+        depth_multiplier=1.4,
+        fix_stem_head=True,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1209,62 +1206,75 @@ def fbnetc_100(pretrained=False, **kwargs):
     if pretrained:
         # pretrained model trained with non-default BN epsilon
         kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
-    model = _gen_fbnetc('fbnetc_100', 1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_fbnetc('fbnetc_100', 1.0, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def spnasnet_100(pretrained=False, **kwargs):
     """ Single-Path NAS Pixel1"""
-    model = _gen_spnasnet('spnasnet_100', 1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_spnasnet('spnasnet_100', 1.0, pretrained=pretrained, **kwargs)
 
 
 @register_model
 def efficientnet_b0(pretrained=False, **kwargs):
     """ EfficientNet-B0 """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b0', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b0',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def eca_efficientnet_b0(pretrained=False, **kwargs):
     """ EfficientNet-B0 w/ ECA attn """
-    # NOTE experimental config
-    model = _gen_efficientnet(
-        'eca_efficientnet_b0', se_layer='ecam', channel_multiplier=1.0, depth_multiplier=1.0,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'eca_efficientnet_b0',
+        se_layer='ecam',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def gc_efficientnet_b0(pretrained=False, **kwargs):
     """ EfficientNet-B0 w/ GlobalContext """
-    # NOTE experminetal config
-    model = _gen_efficientnet(
-        'gc_efficientnet_b0', se_layer='gc', channel_multiplier=1.0, depth_multiplier=1.0,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'gc_efficientnet_b0',
+        se_layer='gc',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_b1(pretrained=False, **kwargs):
     """ EfficientNet-B1 """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b1', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b1',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_b2(pretrained=False, **kwargs):
     """ EfficientNet-B2 """
-    # NOTE for train, drop_rate should be 0.3, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b2', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b2',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1277,10 +1287,13 @@ def efficientnet_b2a(pretrained=False, **kwargs):
 @register_model
 def efficientnet_b3(pretrained=False, **kwargs):
     """ EfficientNet-B3 """
-    # NOTE for train, drop_rate should be 0.3, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b3', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b3',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1293,165 +1306,227 @@ def efficientnet_b3a(pretrained=False, **kwargs):
 @register_model
 def efficientnet_b4(pretrained=False, **kwargs):
     """ EfficientNet-B4 """
-    # NOTE for train, drop_rate should be 0.4, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b4', channel_multiplier=1.4, depth_multiplier=1.8, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b4',
+        channel_multiplier=1.4,
+        depth_multiplier=1.8,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_b5(pretrained=False, **kwargs):
     """ EfficientNet-B5 """
-    # NOTE for train, drop_rate should be 0.4, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b5', channel_multiplier=1.6, depth_multiplier=2.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b5',
+        channel_multiplier=1.6,
+        depth_multiplier=2.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_b6(pretrained=False, **kwargs):
     """ EfficientNet-B6 """
-    # NOTE for train, drop_rate should be 0.5, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b6', channel_multiplier=1.8, depth_multiplier=2.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b6',
+        channel_multiplier=1.8,
+        depth_multiplier=2.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_b7(pretrained=False, **kwargs):
     """ EfficientNet-B7 """
-    # NOTE for train, drop_rate should be 0.5, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b7', channel_multiplier=2.0, depth_multiplier=3.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b7',
+        channel_multiplier=2.0,
+        depth_multiplier=3.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_b8(pretrained=False, **kwargs):
     """ EfficientNet-B8 """
-    # NOTE for train, drop_rate should be 0.5, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_b8', channel_multiplier=2.2, depth_multiplier=3.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b8',
+        channel_multiplier=2.2,
+        depth_multiplier=3.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_l2(pretrained=False, **kwargs):
     """ EfficientNet-L2."""
-    # NOTE for train, drop_rate should be 0.5, drop_path_rate should be 0.2
-    model = _gen_efficientnet(
-        'efficientnet_l2', channel_multiplier=4.3, depth_multiplier=5.3, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_l2',
+        channel_multiplier=4.3,
+        depth_multiplier=5.3,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_es(pretrained=False, **kwargs):
     """ EfficientNet-Edge Small. """
-    model = _gen_efficientnet_edge(
-        'efficientnet_es', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'efficientnet_es',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 @register_model
 def efficientnet_es_pruned(pretrained=False, **kwargs):
     """ EfficientNet-Edge Small Pruned. For more info: https://github.com/DeGirum/pruned-models/releases/tag/efficientnet_v1.0"""
-    model = _gen_efficientnet_edge(
-        'efficientnet_es_pruned', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'efficientnet_es_pruned',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 @register_model
 def efficientnet_em(pretrained=False, **kwargs):
     """ EfficientNet-Edge-Medium. """
-    model = _gen_efficientnet_edge(
-        'efficientnet_em', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'efficientnet_em',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_el(pretrained=False, **kwargs):
     """ EfficientNet-Edge-Large. """
-    model = _gen_efficientnet_edge(
-        'efficientnet_el', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'efficientnet_el',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 @register_model
 def efficientnet_el_pruned(pretrained=False, **kwargs):
     """ EfficientNet-Edge-Large pruned. For more info: https://github.com/DeGirum/pruned-models/releases/tag/efficientnet_v1.0"""
-    model = _gen_efficientnet_edge(
-        'efficientnet_el_pruned', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'efficientnet_el_pruned',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 @register_model
 def efficientnet_cc_b0_4e(pretrained=False, **kwargs):
     """ EfficientNet-CondConv-B0 w/ 8 Experts """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet_condconv(
-        'efficientnet_cc_b0_4e', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_condconv(
+        'efficientnet_cc_b0_4e',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_cc_b0_8e(pretrained=False, **kwargs):
     """ EfficientNet-CondConv-B0 w/ 8 Experts """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet_condconv(
-        'efficientnet_cc_b0_8e', channel_multiplier=1.0, depth_multiplier=1.0, experts_multiplier=2,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_condconv(
+        'efficientnet_cc_b0_8e',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        experts_multiplier=2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_cc_b1_8e(pretrained=False, **kwargs):
     """ EfficientNet-CondConv-B1 w/ 8 Experts """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet_condconv(
-        'efficientnet_cc_b1_8e', channel_multiplier=1.0, depth_multiplier=1.1, experts_multiplier=2,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_condconv(
+        'efficientnet_cc_b1_8e',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        experts_multiplier=2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_lite0(pretrained=False, **kwargs):
     """ EfficientNet-Lite0 """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet_lite(
-        'efficientnet_lite0', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'efficientnet_lite0',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_lite1(pretrained=False, **kwargs):
     """ EfficientNet-Lite1 """
-    # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
-    model = _gen_efficientnet_lite(
-        'efficientnet_lite1', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'efficientnet_lite1',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_lite2(pretrained=False, **kwargs):
     """ EfficientNet-Lite2 """
-    # NOTE for train, drop_rate should be 0.3, drop_path_rate should be 0.2
-    model = _gen_efficientnet_lite(
-        'efficientnet_lite2', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'efficientnet_lite2',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_lite3(pretrained=False, **kwargs):
     """ EfficientNet-Lite3 """
-    # NOTE for train, drop_rate should be 0.3, drop_path_rate should be 0.2
-    model = _gen_efficientnet_lite(
-        'efficientnet_lite3', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'efficientnet_lite3',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnet_lite4(pretrained=False, **kwargs):
     """ EfficientNet-Lite4 """
-    # NOTE for train, drop_rate should be 0.4, drop_path_rate should be 0.2
-    model = _gen_efficientnet_lite(
-        'efficientnet_lite4', channel_multiplier=1.4, depth_multiplier=1.8, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'efficientnet_lite4',
+        channel_multiplier=1.4,
+        depth_multiplier=1.8,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1460,9 +1535,14 @@ def efficientnet_b1_pruned(pretrained=False, **kwargs):
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
     variant = 'efficientnet_b1_pruned'
-    model = _gen_efficientnet(
-        variant, channel_multiplier=1.0, depth_multiplier=1.1, pruned=True, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        variant,
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pruned=True,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1470,10 +1550,14 @@ def efficientnet_b2_pruned(pretrained=False, **kwargs):
     """ EfficientNet-B2 Pruned. The pruning has been obtained using https://arxiv.org/pdf/2002.08258.pdf """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'efficientnet_b2_pruned', channel_multiplier=1.1, depth_multiplier=1.2, pruned=True,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b2_pruned',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pruned=True,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1481,10 +1565,14 @@ def efficientnet_b3_pruned(pretrained=False, **kwargs):
     """ EfficientNet-B3 Pruned. The pruning has been obtained using https://arxiv.org/pdf/2002.08258.pdf """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'efficientnet_b3_pruned', channel_multiplier=1.2, depth_multiplier=1.4, pruned=True,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'efficientnet_b3_pruned',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pruned=True,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1493,39 +1581,47 @@ def efficientnetv2_rw_s(pretrained=False, **kwargs):
     NOTE: This is my initial (pre official code release) w/ some differences.
     See efficientnetv2_s and tf_efficientnetv2_s for versions that match the official w/ PyTorch vs TF padding
     """
-    model = _gen_efficientnetv2_s('efficientnetv2_rw_s', rw=True, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_s(
+        'efficientnetv2_rw_s', rw=True, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def efficientnetv2_rw_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Medium RW variant.
     """
-    model = _gen_efficientnetv2_s(
-        'efficientnetv2_rw_m', channel_multiplier=1.2, depth_multiplier=(1.2,) * 4 + (1.6,) * 2, rw=True,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_s(
+        'efficientnetv2_rw_m',
+        channel_multiplier=1.2,
+        depth_multiplier=(1.2,) * 4 + (1.6,) * 2,
+        rw=True,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def efficientnetv2_s(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. """
-    model = _gen_efficientnetv2_s('efficientnetv2_s', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_s(
+        'efficientnetv2_s', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Medium. """
-    model = _gen_efficientnetv2_m('efficientnetv2_m', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_m(
+        'efficientnetv2_m', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def efficientnetv2_l(pretrained=False, **kwargs):
     """ EfficientNet-V2 Large. """
-    model = _gen_efficientnetv2_l('efficientnetv2_l', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_l(
+        'efficientnetv2_l', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -1533,9 +1629,13 @@ def tf_efficientnet_b0(pretrained=False, **kwargs):
     """ EfficientNet-B0. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b0', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b0',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1543,9 +1643,13 @@ def tf_efficientnet_b1(pretrained=False, **kwargs):
     """ EfficientNet-B1. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b1', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b1',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1553,9 +1657,13 @@ def tf_efficientnet_b2(pretrained=False, **kwargs):
     """ EfficientNet-B2. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b2', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b2',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1563,9 +1671,13 @@ def tf_efficientnet_b3(pretrained=False, **kwargs):
     """ EfficientNet-B3. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b3', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b3',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1573,9 +1685,13 @@ def tf_efficientnet_b4(pretrained=False, **kwargs):
     """ EfficientNet-B4. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b4', channel_multiplier=1.4, depth_multiplier=1.8, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b4',
+        channel_multiplier=1.4,
+        depth_multiplier=1.8,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1583,9 +1699,13 @@ def tf_efficientnet_b5(pretrained=False, **kwargs):
     """ EfficientNet-B5. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b5', channel_multiplier=1.6, depth_multiplier=2.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b5',
+        channel_multiplier=1.6,
+        depth_multiplier=2.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1594,9 +1714,13 @@ def tf_efficientnet_b6(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b6', channel_multiplier=1.8, depth_multiplier=2.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b6',
+        channel_multiplier=1.8,
+        depth_multiplier=2.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1605,9 +1729,13 @@ def tf_efficientnet_b7(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b7', channel_multiplier=2.0, depth_multiplier=3.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b7',
+        channel_multiplier=2.0,
+        depth_multiplier=3.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1616,9 +1744,13 @@ def tf_efficientnet_b8(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b8', channel_multiplier=2.2, depth_multiplier=3.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b8',
+        channel_multiplier=2.2,
+        depth_multiplier=3.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1626,9 +1758,13 @@ def tf_efficientnet_b0_ap(pretrained=False, **kwargs):
     """ EfficientNet-B0 AdvProp. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b0_ap', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b0_ap',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1636,9 +1772,13 @@ def tf_efficientnet_b1_ap(pretrained=False, **kwargs):
     """ EfficientNet-B1 AdvProp. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b1_ap', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b1_ap',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1646,9 +1786,13 @@ def tf_efficientnet_b2_ap(pretrained=False, **kwargs):
     """ EfficientNet-B2 AdvProp. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b2_ap', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b2_ap',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1656,9 +1800,13 @@ def tf_efficientnet_b3_ap(pretrained=False, **kwargs):
     """ EfficientNet-B3 AdvProp. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b3_ap', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b3_ap',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1666,9 +1814,13 @@ def tf_efficientnet_b4_ap(pretrained=False, **kwargs):
     """ EfficientNet-B4 AdvProp. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b4_ap', channel_multiplier=1.4, depth_multiplier=1.8, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b4_ap',
+        channel_multiplier=1.4,
+        depth_multiplier=1.8,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1676,9 +1828,13 @@ def tf_efficientnet_b5_ap(pretrained=False, **kwargs):
     """ EfficientNet-B5 AdvProp. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b5_ap', channel_multiplier=1.6, depth_multiplier=2.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b5_ap',
+        channel_multiplier=1.6,
+        depth_multiplier=2.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1687,9 +1843,13 @@ def tf_efficientnet_b6_ap(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b6_ap', channel_multiplier=1.8, depth_multiplier=2.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b6_ap',
+        channel_multiplier=1.8,
+        depth_multiplier=2.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1698,9 +1858,13 @@ def tf_efficientnet_b7_ap(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b7_ap', channel_multiplier=2.0, depth_multiplier=3.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b7_ap',
+        channel_multiplier=2.0,
+        depth_multiplier=3.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1709,9 +1873,13 @@ def tf_efficientnet_b8_ap(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b8_ap', channel_multiplier=2.2, depth_multiplier=3.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b8_ap',
+        channel_multiplier=2.2,
+        depth_multiplier=3.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1719,9 +1887,13 @@ def tf_efficientnet_b0_ns(pretrained=False, **kwargs):
     """ EfficientNet-B0 NoisyStudent. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b0_ns', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b0_ns',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1729,9 +1901,13 @@ def tf_efficientnet_b1_ns(pretrained=False, **kwargs):
     """ EfficientNet-B1 NoisyStudent. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b1_ns', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b1_ns',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1739,9 +1915,13 @@ def tf_efficientnet_b2_ns(pretrained=False, **kwargs):
     """ EfficientNet-B2 NoisyStudent. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b2_ns', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b2_ns',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1749,9 +1929,13 @@ def tf_efficientnet_b3_ns(pretrained=False, **kwargs):
     """ EfficientNet-B3 NoisyStudent. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b3_ns', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b3_ns',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1759,9 +1943,13 @@ def tf_efficientnet_b4_ns(pretrained=False, **kwargs):
     """ EfficientNet-B4 NoisyStudent. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b4_ns', channel_multiplier=1.4, depth_multiplier=1.8, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b4_ns',
+        channel_multiplier=1.4,
+        depth_multiplier=1.8,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1769,9 +1957,13 @@ def tf_efficientnet_b5_ns(pretrained=False, **kwargs):
     """ EfficientNet-B5 NoisyStudent. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b5_ns', channel_multiplier=1.6, depth_multiplier=2.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b5_ns',
+        channel_multiplier=1.6,
+        depth_multiplier=2.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1780,9 +1972,13 @@ def tf_efficientnet_b6_ns(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b6_ns', channel_multiplier=1.8, depth_multiplier=2.6, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b6_ns',
+        channel_multiplier=1.8,
+        depth_multiplier=2.6,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1791,9 +1987,13 @@ def tf_efficientnet_b7_ns(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_b7_ns', channel_multiplier=2.0, depth_multiplier=3.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_b7_ns',
+        channel_multiplier=2.0,
+        depth_multiplier=3.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1802,9 +2002,13 @@ def tf_efficientnet_l2_ns_475(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_l2_ns_475', channel_multiplier=4.3, depth_multiplier=5.3, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_l2_ns_475',
+        channel_multiplier=4.3,
+        depth_multiplier=5.3,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1813,9 +2017,13 @@ def tf_efficientnet_l2_ns(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.5
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet(
-        'tf_efficientnet_l2_ns', channel_multiplier=4.3, depth_multiplier=5.3, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet(
+        'tf_efficientnet_l2_ns',
+        channel_multiplier=4.3,
+        depth_multiplier=5.3,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1823,9 +2031,13 @@ def tf_efficientnet_es(pretrained=False, **kwargs):
     """ EfficientNet-Edge Small. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_edge(
-        'tf_efficientnet_es', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'tf_efficientnet_es',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1833,9 +2045,13 @@ def tf_efficientnet_em(pretrained=False, **kwargs):
     """ EfficientNet-Edge-Medium. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_edge(
-        'tf_efficientnet_em', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'tf_efficientnet_em',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1843,9 +2059,13 @@ def tf_efficientnet_el(pretrained=False, **kwargs):
     """ EfficientNet-Edge-Large. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_edge(
-        'tf_efficientnet_el', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_edge(
+        'tf_efficientnet_el',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1854,9 +2074,13 @@ def tf_efficientnet_cc_b0_4e(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_condconv(
-        'tf_efficientnet_cc_b0_4e', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_condconv(
+        'tf_efficientnet_cc_b0_4e',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1865,10 +2089,14 @@ def tf_efficientnet_cc_b0_8e(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_condconv(
-        'tf_efficientnet_cc_b0_8e', channel_multiplier=1.0, depth_multiplier=1.0, experts_multiplier=2,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_condconv(
+        'tf_efficientnet_cc_b0_8e',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        experts_multiplier=2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1877,10 +2105,14 @@ def tf_efficientnet_cc_b1_8e(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_condconv(
-        'tf_efficientnet_cc_b1_8e', channel_multiplier=1.0, depth_multiplier=1.1, experts_multiplier=2,
-        pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_condconv(
+        'tf_efficientnet_cc_b1_8e',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        experts_multiplier=2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1889,9 +2121,13 @@ def tf_efficientnet_lite0(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_lite(
-        'tf_efficientnet_lite0', channel_multiplier=1.0, depth_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'tf_efficientnet_lite0',
+        channel_multiplier=1.0,
+        depth_multiplier=1.0,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1900,9 +2136,13 @@ def tf_efficientnet_lite1(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.2, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_lite(
-        'tf_efficientnet_lite1', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'tf_efficientnet_lite1',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1911,9 +2151,13 @@ def tf_efficientnet_lite2(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.3, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_lite(
-        'tf_efficientnet_lite2', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'tf_efficientnet_lite2',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1922,9 +2166,13 @@ def tf_efficientnet_lite3(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.3, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_lite(
-        'tf_efficientnet_lite3', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'tf_efficientnet_lite3',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -1933,9 +2181,13 @@ def tf_efficientnet_lite4(pretrained=False, **kwargs):
     # NOTE for train, drop_rate should be 0.4, drop_path_rate should be 0.2
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnet_lite(
-        'tf_efficientnet_lite4', channel_multiplier=1.4, depth_multiplier=1.8, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnet_lite(
+        'tf_efficientnet_lite4',
+        channel_multiplier=1.4,
+        depth_multiplier=1.8,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 
@@ -1944,8 +2196,9 @@ def tf_efficientnetv2_s(pretrained=False, **kwargs):
     """ EfficientNet-V2 Small. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_s('tf_efficientnetv2_s', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_s(
+        'tf_efficientnetv2_s', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -1953,8 +2206,9 @@ def tf_efficientnetv2_m(pretrained=False, **kwargs):
     """ EfficientNet-V2 Medium. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_m('tf_efficientnetv2_m', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_m(
+        'tf_efficientnetv2_m', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -1962,8 +2216,9 @@ def tf_efficientnetv2_l(pretrained=False, **kwargs):
     """ EfficientNet-V2 Large. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_l('tf_efficientnetv2_l', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_l(
+        'tf_efficientnetv2_l', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -1972,8 +2227,9 @@ def tf_efficientnetv2_s_in21ft1k(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_s('tf_efficientnetv2_s_in21ft1k', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_s(
+        'tf_efficientnetv2_s_in21ft1k', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -1982,8 +2238,9 @@ def tf_efficientnetv2_m_in21ft1k(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_m('tf_efficientnetv2_m_in21ft1k', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_m(
+        'tf_efficientnetv2_m_in21ft1k', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -1992,8 +2249,9 @@ def tf_efficientnetv2_l_in21ft1k(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_l('tf_efficientnetv2_l_in21ft1k', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_l(
+        'tf_efficientnetv2_l_in21ft1k', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2002,8 +2260,9 @@ def tf_efficientnetv2_s_in21k(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_s('tf_efficientnetv2_s_in21k', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_s(
+        'tf_efficientnetv2_s_in21k', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2012,8 +2271,9 @@ def tf_efficientnetv2_m_in21k(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_m('tf_efficientnetv2_m_in21k', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_m(
+        'tf_efficientnetv2_m_in21k', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2022,8 +2282,9 @@ def tf_efficientnetv2_l_in21k(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_l('tf_efficientnetv2_l_in21k', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_l(
+        'tf_efficientnetv2_l_in21k', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2031,8 +2292,9 @@ def tf_efficientnetv2_b0(pretrained=False, **kwargs):
     """ EfficientNet-V2-B0. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_base('tf_efficientnetv2_b0', pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_base(
+        'tf_efficientnetv2_b0', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2040,9 +2302,13 @@ def tf_efficientnetv2_b1(pretrained=False, **kwargs):
     """ EfficientNet-V2-B1. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_base(
-        'tf_efficientnetv2_b1', channel_multiplier=1.0, depth_multiplier=1.1, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_base(
+        'tf_efficientnetv2_b1',
+        channel_multiplier=1.0,
+        depth_multiplier=1.1,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -2050,9 +2316,13 @@ def tf_efficientnetv2_b2(pretrained=False, **kwargs):
     """ EfficientNet-V2-B2. Tensorflow compatible variant  """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_base(
-        'tf_efficientnetv2_b2', channel_multiplier=1.1, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_base(
+        'tf_efficientnetv2_b2',
+        channel_multiplier=1.1,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -2060,36 +2330,40 @@ def tf_efficientnetv2_b3(pretrained=False, **kwargs):
     """ EfficientNet-V2-B3. Tensorflow compatible variant """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_efficientnetv2_base(
-        'tf_efficientnetv2_b3', channel_multiplier=1.2, depth_multiplier=1.4, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_efficientnetv2_base(
+        'tf_efficientnetv2_b3',
+        channel_multiplier=1.2,
+        depth_multiplier=1.4,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
 def mixnet_s(pretrained=False, **kwargs):
     """Creates a MixNet Small model.
     """
-    model = _gen_mixnet_s(
-        'mixnet_s', channel_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_s(
+        'mixnet_s', channel_multiplier=1.0, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def mixnet_m(pretrained=False, **kwargs):
     """Creates a MixNet Medium model.
     """
-    model = _gen_mixnet_m(
-        'mixnet_m', channel_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_m(
+        'mixnet_m', channel_multiplier=1.0, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def mixnet_l(pretrained=False, **kwargs):
     """Creates a MixNet Large model.
     """
-    model = _gen_mixnet_m(
-        'mixnet_l', channel_multiplier=1.3, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_m(
+        'mixnet_l', channel_multiplier=1.3, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2097,9 +2371,13 @@ def mixnet_xl(pretrained=False, **kwargs):
     """Creates a MixNet Extra-Large model.
     Not a paper spec, experimental def by RW w/ depth scaling.
     """
-    model = _gen_mixnet_m(
-        'mixnet_xl', channel_multiplier=1.6, depth_multiplier=1.2, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_m(
+        'mixnet_xl',
+        channel_multiplier=1.6,
+        depth_multiplier=1.2,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -2107,9 +2385,13 @@ def mixnet_xxl(pretrained=False, **kwargs):
     """Creates a MixNet Double Extra Large model.
     Not a paper spec, experimental def by RW w/ depth scaling.
     """
-    model = _gen_mixnet_m(
-        'mixnet_xxl', channel_multiplier=2.4, depth_multiplier=1.3, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_m(
+        'mixnet_xxl',
+        channel_multiplier=2.4,
+        depth_multiplier=1.3,
+        pretrained=pretrained,
+        **kwargs
+    )
 
 
 @register_model
@@ -2118,9 +2400,9 @@ def tf_mixnet_s(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_mixnet_s(
-        'tf_mixnet_s', channel_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_s(
+        'tf_mixnet_s', channel_multiplier=1.0, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2129,9 +2411,9 @@ def tf_mixnet_m(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_mixnet_m(
-        'tf_mixnet_m', channel_multiplier=1.0, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_m(
+        'tf_mixnet_m', channel_multiplier=1.0, pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
@@ -2140,6 +2422,6 @@ def tf_mixnet_l(pretrained=False, **kwargs):
     """
     kwargs['bn_eps'] = BN_EPS_TF_DEFAULT
     kwargs['pad_type'] = 'same'
-    model = _gen_mixnet_m(
-        'tf_mixnet_l', channel_multiplier=1.3, pretrained=pretrained, **kwargs)
-    return model
+    return _gen_mixnet_m(
+        'tf_mixnet_l', channel_multiplier=1.3, pretrained=pretrained, **kwargs
+    )

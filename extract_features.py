@@ -14,8 +14,7 @@ def parse_args():
     parser.add_argument('--data_root', type=str, default='images')
     parser.add_argument('--output_dir', type=str, default='vision_features')
     parser.add_argument('--img_type', type=str, default="vit", choices=['detr', 'vit'], help='type of image features')
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 def extract_features(img_type, input_image):
     if img_type == "vit":
@@ -62,9 +61,9 @@ if __name__ == '__main__':
         feature = extract_features(args.img_type, curr_dir)
         tmp.append(feature.detach().cpu())
         name_map[str(image)] = idx
-    
+
     res = torch.cat(tmp).cpu()
     print(res.shape)
-    torch.save(res, os.path.join(args.output_dir, args.img_type +'.pth'))
+    torch.save(res, os.path.join(args.output_dir, f'{args.img_type}.pth'))
     with open(os.path.join(args.output_dir, 'name_map.json'), 'w') as outfile:
         json.dump(name_map, outfile)

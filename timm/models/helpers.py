@@ -37,10 +37,10 @@ def load_state_dict(checkpoint_path, use_ema=False):
             state_dict = new_state_dict
         else:
             state_dict = checkpoint
-        _logger.info("Loaded {} from checkpoint '{}'".format(state_dict_key, checkpoint_path))
+        _logger.info(f"Loaded {state_dict_key} from checkpoint '{checkpoint_path}'")
         return state_dict
     else:
-        _logger.error("No checkpoint found at '{}'".format(checkpoint_path))
+        _logger.error(f"No checkpoint found at '{checkpoint_path}'")
         raise FileNotFoundError()
 
 
@@ -85,14 +85,16 @@ def resume_checkpoint(model, checkpoint_path, optimizer=None, loss_scaler=None, 
                     resume_epoch += 1  # start at the next epoch, old checkpoints incremented before save
 
             if log_info:
-                _logger.info("Loaded checkpoint '{}' (epoch {})".format(checkpoint_path, checkpoint['epoch']))
+                _logger.info(
+                    f"Loaded checkpoint '{checkpoint_path}' (epoch {checkpoint['epoch']})"
+                )
         else:
             model.load_state_dict(checkpoint)
             if log_info:
-                _logger.info("Loaded checkpoint '{}'".format(checkpoint_path))
+                _logger.info(f"Loaded checkpoint '{checkpoint_path}'")
         return resume_epoch
     else:
-        _logger.error("No checkpoint found at '{}'".format(checkpoint_path))
+        _logger.error(f"No checkpoint found at '{checkpoint_path}'")
         raise FileNotFoundError()
 
 
@@ -147,12 +149,11 @@ def adapt_input_conv(in_chans, conv_weight):
     elif in_chans != 3:
         if I != 3:
             raise NotImplementedError('Weight format not supported by conversion.')
-        else:
-            # NOTE this strategy should be better than random init, but there could be other combinations of
-            # the original RGB input layer weights that'd work better for specific cases.
-            repeat = int(math.ceil(in_chans / 3))
-            conv_weight = conv_weight.repeat(1, repeat, 1, 1)[:, :in_chans, :, :]
-            conv_weight *= (3 / float(in_chans))
+        # NOTE this strategy should be better than random init, but there could be other combinations of
+        # the original RGB input layer weights that'd work better for specific cases.
+        repeat = int(math.ceil(in_chans / 3))
+        conv_weight = conv_weight.repeat(1, repeat, 1, 1)[:, :in_chans, :, :]
+        conv_weight *= (3 / float(in_chans))
     conv_weight = conv_weight.to(conv_type)
     return conv_weight
 
@@ -194,7 +195,7 @@ def load_pretrained(model, default_cfg=None, num_classes=1000, in_chans=3, filte
         if isinstance(input_convs, str):
             input_convs = (input_convs,)
         for input_conv_name in input_convs:
-            weight_name = input_conv_name + '.weight'
+            weight_name = f'{input_conv_name}.weight'
             try:
                 state_dict[weight_name] = adapt_input_conv(in_chans, state_dict[weight_name])
                 _logger.info(
@@ -213,16 +214,16 @@ def load_pretrained(model, default_cfg=None, num_classes=1000, in_chans=3, filte
         if num_classes != default_cfg['num_classes']:
             for classifier_name in classifiers:
                 # completely discard fully connected if model num_classes doesn't match pretrained weights
-                del state_dict[classifier_name + '.weight']
-                del state_dict[classifier_name + '.bias']
+                del state_dict[f'{classifier_name}.weight']
+                del state_dict[f'{classifier_name}.bias']
             strict = False
         elif label_offset > 0:
             for classifier_name in classifiers:
                 # special case for pretrained weights with an extra background class in pretrained weights
-                classifier_weight = state_dict[classifier_name + '.weight']
-                state_dict[classifier_name + '.weight'] = classifier_weight[label_offset:]
-                classifier_bias = state_dict[classifier_name + '.bias']
-                state_dict[classifier_name + '.bias'] = classifier_bias[label_offset:]
+                classifier_weight = state_dict[f'{classifier_name}.weight']
+                state_dict[f'{classifier_name}.weight'] = classifier_weight[label_offset:]
+                classifier_bias = state_dict[f'{classifier_name}.bias']
+                state_dict[f'{classifier_name}.bias'] = classifier_bias[label_offset:]
 
     model.load_state_dict(state_dict, strict=strict)
 
@@ -236,10 +237,7 @@ def extract_layer(model, layer):
         layer = layer[1:]
     for l in layer:
         if hasattr(module, l):
-            if not l.isdigit():
-                module = getattr(module, l)
-            else:
-                module = module[int(l)]
+            module = getattr(module, l) if not l.isdigit() else module[int(l)]
         else:
             return module
     return module
@@ -254,17 +252,11 @@ def set_layer(model, layer, val):
     module2 = module
     for l in layer:
         if hasattr(module2, l):
-            if not l.isdigit():
-                module2 = getattr(module2, l)
-            else:
-                module2 = module2[int(l)]
+            module2 = getattr(module2, l) if not l.isdigit() else module2[int(l)]
             lst_index += 1
     lst_index -= 1
     for l in layer[:lst_index]:
-        if not l.isdigit():
-            module = getattr(module, l)
-        else:
-            module = module[int(l)]
+        module = getattr(module, l) if not l.isdigit() else module[int(l)]
     l = layer[lst_index]
     setattr(module, l, val)
 
@@ -283,12 +275,9 @@ def adapt_model_from_string(parent_module, model_string):
     new_module = deepcopy(parent_module)
     for n, m in parent_module.named_modules():
         old_module = extract_layer(parent_module, n)
-        if isinstance(old_module, nn.Conv2d) or isinstance(old_module, Conv2dSame):
-            if isinstance(old_module, Conv2dSame):
-                conv = Conv2dSame
-            else:
-                conv = nn.Conv2d
-            s = state_dict[n + '.weight']
+        if isinstance(old_module, (nn.Conv2d, Conv2dSame)):
+            conv = Conv2dSame if isinstance(old_module, Conv2dSame) else nn.Conv2d
+            s = state_dict[f'{n}.weight']
             in_channels = s[1]
             out_channels = s[0]
             g = 1
@@ -302,12 +291,16 @@ def adapt_model_from_string(parent_module, model_string):
             set_layer(new_module, n, new_conv)
         if isinstance(old_module, nn.BatchNorm2d):
             new_bn = nn.BatchNorm2d(
-                num_features=state_dict[n + '.weight'][0], eps=old_module.eps, momentum=old_module.momentum,
-                affine=old_module.affine, track_running_stats=True)
+                num_features=state_dict[f'{n}.weight'][0],
+                eps=old_module.eps,
+                momentum=old_module.momentum,
+                affine=old_module.affine,
+                track_running_stats=True,
+            )
             set_layer(new_module, n, new_bn)
         if isinstance(old_module, nn.Linear):
             # FIXME extra checks to ensure this is actually the FC classifier layer and not a diff Linear layer?
-            num_features = state_dict[n + '.weight'][1]
+            num_features = state_dict[f'{n}.weight'][1]
             new_fc = Linear(
                 in_features=num_features, out_features=old_module.out_features, bias=old_module.bias is not None)
             set_layer(new_module, n, new_fc)
@@ -320,7 +313,9 @@ def adapt_model_from_string(parent_module, model_string):
 
 
 def adapt_model_from_file(parent_module, model_variant):
-    adapt_file = os.path.join(os.path.dirname(__file__), 'pruned', model_variant + '.txt')
+    adapt_file = os.path.join(
+        os.path.dirname(__file__), 'pruned', f'{model_variant}.txt'
+    )
     with open(adapt_file, 'r') as f:
         return adapt_model_from_string(parent_module, f.read().strip())
 
@@ -337,8 +332,7 @@ def default_cfg_for_features(default_cfg):
 def overlay_external_default_cfg(default_cfg, kwargs):
     """ Overlay 'external_default_cfg' in kwargs on top of default_cfg arg.
     """
-    external_default_cfg = kwargs.pop('external_default_cfg', None)
-    if external_default_cfg:
+    if external_default_cfg := kwargs.pop('external_default_cfg', None):
         default_cfg.pop('url', None)  # url should come from external cfg
         default_cfg.pop('hf_hub', None)  # hf hub id should come from external cfg
         default_cfg.update(external_default_cfg)
@@ -479,11 +473,7 @@ def build_model_with_cfg(
 
 
 def model_parameters(model, exclude_head=False):
-    if exclude_head:
-        # FIXME this a bit of a quick and dirty hack to skip classifier head params based on ordering
-        return [p for p in model.parameters()][:-2]
-    else:
-        return model.parameters()
+    return list(model.parameters())[:-2] if exclude_head else model.parameters()
 
 
 def named_apply(fn: Callable, module: nn.Module, name='', depth_first=True, include_root=False) -> nn.Module:

@@ -16,10 +16,10 @@ def get_outdir(path, *paths, inc=False):
         os.makedirs(outdir)
     elif inc:
         count = 1
-        outdir_inc = outdir + '-' + str(count)
+        outdir_inc = f'{outdir}-{count}'
         while os.path.exists(outdir_inc):
             count = count + 1
-            outdir_inc = outdir + '-' + str(count)
+            outdir_inc = f'{outdir}-{str(count)}'
             assert count < 100
         outdir = outdir_inc
         os.makedirs(outdir)
@@ -28,8 +28,8 @@ def get_outdir(path, *paths, inc=False):
 
 def update_summary(epoch, train_metrics, eval_metrics, filename, write_header=False, log_wandb=False):
     rowd = OrderedDict(epoch=epoch)
-    rowd.update([('train_' + k, v) for k, v in train_metrics.items()])
-    rowd.update([('eval_' + k, v) for k, v in eval_metrics.items()])
+    rowd.update([(f'train_{k}', v) for k, v in train_metrics.items()])
+    rowd.update([(f'eval_{k}', v) for k, v in eval_metrics.items()])
     if log_wandb:
         wandb.log(rowd)
     with open(filename, mode='a') as cf:

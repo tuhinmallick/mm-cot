@@ -87,7 +87,7 @@ class DlaBottleneck(nn.Module):
         super(DlaBottleneck, self).__init__()
         self.stride = stride
         mid_planes = int(math.floor(outplanes * (base_width / 64)) * cardinality)
-        mid_planes = mid_planes // self.expansion
+        mid_planes //= self.expansion
 
         self.conv1 = nn.Conv2d(inplanes, mid_planes, kernel_size=1, bias=False)
         self.bn1 = nn.BatchNorm2d(mid_planes)
@@ -131,7 +131,7 @@ class DlaBottle2neck(nn.Module):
         self.is_first = stride > 1
         self.scale = scale
         mid_planes = int(math.floor(outplanes * (base_width / 64)) * cardinality)
-        mid_planes = mid_planes // self.expansion
+        mid_planes //= self.expansion
         self.width = mid_planes
 
         self.conv1 = nn.Conv2d(inplanes, mid_planes * scale, kernel_size=1, bias=False)

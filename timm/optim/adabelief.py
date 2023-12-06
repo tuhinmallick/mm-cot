@@ -43,14 +43,14 @@ class AdaBelief(Optimizer):
                  weight_decay=0, amsgrad=False, weight_decouple=True, fixed_decay=False, rectify=True,
                  degenerated_to_sgd=True):
 
-        if not 0.0 <= lr:
-            raise ValueError("Invalid learning rate: {}".format(lr))
-        if not 0.0 <= eps:
-            raise ValueError("Invalid epsilon value: {}".format(eps))
+        if lr < 0.0:
+            raise ValueError(f"Invalid learning rate: {lr}")
+        if eps < 0.0:
+            raise ValueError(f"Invalid epsilon value: {eps}")
         if not 0.0 <= betas[0] < 1.0:
-            raise ValueError("Invalid beta parameter at index 0: {}".format(betas[0]))
+            raise ValueError(f"Invalid beta parameter at index 0: {betas[0]}")
         if not 0.0 <= betas[1] < 1.0:
-            raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
+            raise ValueError(f"Invalid beta parameter at index 1: {betas[1]}")
 
         self.degenerated_to_sgd = degenerated_to_sgd
         if isinstance(params, (list, tuple)) and len(params) > 0 and isinstance(params[0], dict):
@@ -95,15 +95,12 @@ class AdaBelief(Optimizer):
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
         """
-        loss = None
-        if closure is not None:
-            loss = closure()
-
+        loss = closure() if closure is not None else None
         for group in self.param_groups:
             for p in group['params']:
                 if p.grad is None:
                     continue
-                
+
                 # cast data type
                 half_precision = False
                 if p.data.dtype == torch.float16:
@@ -131,16 +128,15 @@ class AdaBelief(Optimizer):
                     if amsgrad:
                         # Maintains max of all exp. moving avg. of sq. grad. values
                         state['max_exp_avg_var'] = torch.zeros_like(p.data)
-                
+
                 # perform weight decay, check if decoupled weight decay
                 if self.weight_decouple:
-                    if not self.fixed_decay:
-                        p.data.mul_(1.0 - group['lr'] * group['weight_decay'])
-                    else:
+                    if self.fixed_decay:
                         p.data.mul_(1.0 - group['weight_decay'])
-                else:
-                    if group['weight_decay'] != 0:
-                        grad.add_(p.data, alpha=group['weight_decay'])
+                    else:
+                        p.data.mul_(1.0 - group['lr'] * group['weight_decay'])
+                elif group['weight_decay'] != 0:
+                    grad.add_(p.data, alpha=group['weight_decay'])
 
                 # get current state variable
                 exp_avg, exp_avg_var = state['exp_avg'], state['exp_avg_var']
@@ -163,7 +159,7 @@ class AdaBelief(Optimizer):
                     denom = (max_exp_avg_var.sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
                 else:
                     denom = (exp_avg_var.add_(group['eps']).sqrt() / math.sqrt(bias_correction2)).add_(group['eps'])
-                
+
                 # update
                 if not self.rectify:
                     # Default update
@@ -197,7 +193,7 @@ class AdaBelief(Optimizer):
                         p.data.addcdiv_(exp_avg, denom, value=-step_size * group['lr'])
                     elif step_size > 0:
                         p.data.add_( exp_avg, alpha=-step_size * group['lr'])
-                
+
                 if half_precision:
                     p.data = p.data.half()
                     p.grad = p.grad.half() 

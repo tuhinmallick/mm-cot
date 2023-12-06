@@ -105,7 +105,7 @@ class PlateauLRScheduler(Scheduler):
         # apply the noise on top of previous LR, cache the old value so we can restore for normal
         # stepping of base scheduler
         restore_lr = []
-        for i, param_group in enumerate(self.optimizer.param_groups):
+        for param_group in self.optimizer.param_groups:
             old_lr = float(param_group['lr'])
             restore_lr.append(old_lr)
             new_lr = old_lr + old_lr * noise

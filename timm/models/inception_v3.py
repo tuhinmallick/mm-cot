@@ -79,8 +79,7 @@ class InceptionA(nn.Module):
         branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
         branch_pool = self.branch_pool(branch_pool)
 
-        outputs = [branch1x1, branch5x5, branch3x3dbl, branch_pool]
-        return outputs
+        return [branch1x1, branch5x5, branch3x3dbl, branch_pool]
 
     def forward(self, x):
         outputs = self._forward(x)
@@ -108,8 +107,7 @@ class InceptionB(nn.Module):
 
         branch_pool = F.max_pool2d(x, kernel_size=3, stride=2)
 
-        outputs = [branch3x3, branch3x3dbl, branch_pool]
-        return outputs
+        return [branch3x3, branch3x3dbl, branch_pool]
 
     def forward(self, x):
         outputs = self._forward(x)
@@ -153,8 +151,7 @@ class InceptionC(nn.Module):
         branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
         branch_pool = self.branch_pool(branch_pool)
 
-        outputs = [branch1x1, branch7x7, branch7x7dbl, branch_pool]
-        return outputs
+        return [branch1x1, branch7x7, branch7x7dbl, branch_pool]
 
     def forward(self, x):
         outputs = self._forward(x)
@@ -185,8 +182,7 @@ class InceptionD(nn.Module):
         branch7x7x3 = self.branch7x7x3_4(branch7x7x3)
 
         branch_pool = F.max_pool2d(x, kernel_size=3, stride=2)
-        outputs = [branch3x3, branch7x7x3, branch_pool]
-        return outputs
+        return [branch3x3, branch7x7x3, branch_pool]
 
     def forward(self, x):
         outputs = self._forward(x)
@@ -233,8 +229,7 @@ class InceptionE(nn.Module):
         branch_pool = F.avg_pool2d(x, kernel_size=3, stride=1, padding=1)
         branch_pool = self.branch_pool(branch_pool)
 
-        outputs = [branch1x1, branch3x3, branch3x3dbl, branch_pool]
-        return outputs
+        return [branch1x1, branch3x3, branch3x3dbl, branch_pool]
 
     def forward(self, x):
         outputs = self._forward(x)
@@ -310,10 +305,7 @@ class InceptionV3(nn.Module):
         self.Mixed_6c = InceptionC(768, channels_7x7=160)
         self.Mixed_6d = InceptionC(768, channels_7x7=160)
         self.Mixed_6e = InceptionC(768, channels_7x7=192)
-        if aux_logits:
-            self.AuxLogits = InceptionAux(768, num_classes)
-        else:
-            self.AuxLogits = None
+        self.AuxLogits = InceptionAux(768, num_classes) if aux_logits else None
         self.Mixed_7a = InceptionD(768)
         self.Mixed_7b = InceptionE(1280)
         self.Mixed_7c = InceptionE(2048)
@@ -329,7 +321,7 @@ class InceptionV3(nn.Module):
         self.global_pool, self.fc = create_classifier(self.num_features, self.num_classes, pool_type=global_pool)
 
         for m in self.modules():
-            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+            if isinstance(m, (nn.Conv2d, nn.Linear)):
                 stddev = m.stddev if hasattr(m, 'stddev') else 0.1
                 trunc_normal_(m.weight, std=stddev)
             elif isinstance(m, nn.BatchNorm2d):
@@ -425,8 +417,7 @@ class InceptionV3Aux(InceptionV3):
 
 def _create_inception_v3(variant, pretrained=False, **kwargs):
     default_cfg = default_cfgs[variant]
-    aux_logits = kwargs.pop('aux_logits', False)
-    if aux_logits:
+    if aux_logits := kwargs.pop('aux_logits', False):
         assert not kwargs.pop('features_only', False)
         model_cls = InceptionV3Aux
         load_strict = default_cfg['has_aux']
@@ -442,29 +433,23 @@ def _create_inception_v3(variant, pretrained=False, **kwargs):
 
 @register_model
 def inception_v3(pretrained=False, **kwargs):
-    # original PyTorch weights, ported from Tensorflow but modified
-    model = _create_inception_v3('inception_v3', pretrained=pretrained, **kwargs)
-    return model
+    return _create_inception_v3('inception_v3', pretrained=pretrained, **kwargs)
 
 
 @register_model
 def tf_inception_v3(pretrained=False, **kwargs):
-    # my port of Tensorflow SLIM weights (http://download.tensorflow.org/models/inception_v3_2016_08_28.tar.gz)
-    model = _create_inception_v3('tf_inception_v3', pretrained=pretrained, **kwargs)
-    return model
+    return _create_inception_v3('tf_inception_v3', pretrained=pretrained, **kwargs)
 
 
 @register_model
 def adv_inception_v3(pretrained=False, **kwargs):
-    # my port of Tensorflow adversarially trained Inception V3 from
-    # http://download.tensorflow.org/models/adv_inception_v3_2017_08_18.tar.gz
-    model = _create_inception_v3('adv_inception_v3', pretrained=pretrained, **kwargs)
-    return model
+    return _create_inception_v3(
+        'adv_inception_v3', pretrained=pretrained, **kwargs
+    )
 
 
 @register_model
 def gluon_inception_v3(pretrained=False, **kwargs):
-    # from gluon pretrained models, best performing in terms of accuracy/loss metrics
-    # https://gluon-cv.mxnet.io/model_zoo/classification.html
-    model = _create_inception_v3('gluon_inception_v3', pretrained=pretrained, **kwargs)
-    return model
+    return _create_inception_v3(
+        'gluon_inception_v3', pretrained=pretrained, **kwargs
+    )

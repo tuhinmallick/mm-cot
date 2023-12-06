@@ -49,10 +49,7 @@ class SpatialMlp(nn.Module):
         self.out_features = out_features
         self.spatial_conv = spatial_conv
         if self.spatial_conv:
-            if group < 2:  # net setting
-                hidden_features = in_features * 5 // 6
-            else:
-                hidden_features = in_features * 2
+            hidden_features = in_features * 5 // 6 if group < 2 else in_features * 2
         self.hidden_features = hidden_features
         self.group = group
         self.drop = nn.Dropout(drop)
@@ -165,24 +162,23 @@ class Visformer(nn.Module):
                 img_size=img_size, patch_size=patch_size, in_chans=in_chans,
                 embed_dim=embed_dim, norm_layer=embed_norm, flatten=False)
             img_size = [x // 16 for x in img_size]
+        elif self.init_channels is None:
+            self.stem = None
+            self.patch_embed1 = PatchEmbed(
+                img_size=img_size, patch_size=patch_size // 2, in_chans=in_chans,
+                embed_dim=embed_dim // 2, norm_layer=embed_norm, flatten=False)
+            img_size = [x // 8 for x in img_size]
         else:
-            if self.init_channels is None:
-                self.stem = None
-                self.patch_embed1 = PatchEmbed(
-                    img_size=img_size, patch_size=patch_size // 2, in_chans=in_chans,
-                    embed_dim=embed_dim // 2, norm_layer=embed_norm, flatten=False)
-                img_size = [x // 8 for x in img_size]
-            else:
-                self.stem = nn.Sequential(
-                    nn.Conv2d(in_chans, self.init_channels, 7, stride=2, padding=3, bias=False),
-                    nn.BatchNorm2d(self.init_channels),
-                    nn.ReLU(inplace=True)
-                )
-                img_size = [x // 2 for x in img_size]
-                self.patch_embed1 = PatchEmbed(
-                    img_size=img_size, patch_size=patch_size // 4, in_chans=self.init_channels,
-                    embed_dim=embed_dim // 2, norm_layer=embed_norm, flatten=False)
-                img_size = [x // 4 for x in img_size]
+            self.stem = nn.Sequential(
+                nn.Conv2d(in_chans, self.init_channels, 7, stride=2, padding=3, bias=False),
+                nn.BatchNorm2d(self.init_channels),
+                nn.ReLU(inplace=True)
+            )
+            img_size = [x // 2 for x in img_size]
+            self.patch_embed1 = PatchEmbed(
+                img_size=img_size, patch_size=patch_size // 4, in_chans=self.init_channels,
+                embed_dim=embed_dim // 2, norm_layer=embed_norm, flatten=False)
+            img_size = [x // 4 for x in img_size]
 
         if self.pos_embed:
             if self.vit_stem:
@@ -251,10 +247,7 @@ class Visformer(nn.Module):
             trunc_normal_(m.weight, std=0.02)
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
-        elif isinstance(m, nn.LayerNorm):
-            nn.init.constant_(m.bias, 0)
-            nn.init.constant_(m.weight, 1.0)
-        elif isinstance(m, nn.BatchNorm2d):
+        elif isinstance(m, (nn.LayerNorm, nn.BatchNorm2d)):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
         elif isinstance(m, nn.Conv2d):
@@ -315,11 +308,13 @@ class Visformer(nn.Module):
 def _create_visformer(variant, pretrained=False, default_cfg=None, **kwargs):
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
-    model = build_model_with_cfg(
-        Visformer, variant, pretrained,
+    return build_model_with_cfg(
+        Visformer,
+        variant,
+        pretrained,
         default_cfg=default_cfgs[variant],
-        **kwargs)
-    return model
+        **kwargs
+    )
 
 
 @register_model
@@ -328,8 +323,7 @@ def visformer_tiny(pretrained=False, **kwargs):
         init_channels=16, embed_dim=192, depth=(7, 4, 4), num_heads=3, mlp_ratio=4., group=8,
         attn_stage='011', spatial_conv='100', norm_layer=nn.BatchNorm2d, conv_init=True,
         embed_norm=nn.BatchNorm2d, **kwargs)
-    model = _create_visformer('visformer_tiny', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_visformer('visformer_tiny', pretrained=pretrained, **model_cfg)
 
 
 @register_model
@@ -338,8 +332,7 @@ def visformer_small(pretrained=False, **kwargs):
         init_channels=32, embed_dim=384, depth=(7, 4, 4), num_heads=6, mlp_ratio=4., group=8,
         attn_stage='011', spatial_conv='100', norm_layer=nn.BatchNorm2d, conv_init=True,
         embed_norm=nn.BatchNorm2d, **kwargs)
-    model = _create_visformer('visformer_small', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_visformer('visformer_small', pretrained=pretrained, **model_cfg)
 
 
 # @register_model

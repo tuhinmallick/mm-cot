@@ -268,8 +268,7 @@ class CrossStage(nn.Module):
         xs, xb = x[:, :split], x[:, split:]
         xb = self.blocks(xb)
         xb = self.conv_transition_b(xb).contiguous()
-        out = self.conv_transition(torch.cat([xs, xb], dim=1))
-        return out
+        return self.conv_transition(torch.cat([xs, xb], dim=1))
 
 
 class DarkStage(nn.Module):
@@ -328,8 +327,7 @@ def _cfg_to_stage_args(cfg, curr_stride=2, output_stride=32, drop_path_rate=0.):
     cfg['stride'] = stage_strides
     cfg['dilation'] = stage_dilations
     cfg['first_dilation'] = stage_first_dilations
-    stage_args = [dict(zip(cfg.keys(), values)) for values in zip(*cfg.values())]
-    return stage_args
+    return [dict(zip(cfg.keys(), values)) for values in zip(*cfg.values())]
 
 
 class CspNet(nn.Module):

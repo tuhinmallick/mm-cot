@@ -56,7 +56,7 @@ class ModelEma:
             for k, v in checkpoint['state_dict_ema'].items():
                 # ema model may have been wrapped by DataParallel, and need module prefix
                 if self.ema_has_module:
-                    name = 'module.' + k if not k.startswith('module') else k
+                    name = f'module.{k}' if not k.startswith('module') else k
                 else:
                     name = k
                 new_state_dict[name] = v
@@ -72,7 +72,7 @@ class ModelEma:
             msd = model.state_dict()
             for k, ema_v in self.ema.state_dict().items():
                 if needs_module:
-                    k = 'module.' + k
+                    k = f'module.{k}'
                 model_v = msd[k].detach()
                 if self.device:
                     model_v = model_v.to(device=self.device)

@@ -72,13 +72,12 @@ class BasicBlock(nn.Module):
         super(BasicBlock, self).__init__()
         if stride == 1:
             self.conv1 = conv2d_iabn(inplanes, planes, stride=1, act_param=1e-3)
+        elif aa_layer is None:
+            self.conv1 = conv2d_iabn(inplanes, planes, stride=2, act_param=1e-3)
         else:
-            if aa_layer is None:
-                self.conv1 = conv2d_iabn(inplanes, planes, stride=2, act_param=1e-3)
-            else:
-                self.conv1 = nn.Sequential(
-                    conv2d_iabn(inplanes, planes, stride=1, act_param=1e-3),
-                    aa_layer(channels=planes, filt_size=3, stride=2))
+            self.conv1 = nn.Sequential(
+                conv2d_iabn(inplanes, planes, stride=1, act_param=1e-3),
+                aa_layer(channels=planes, filt_size=3, stride=2))
 
         self.conv2 = conv2d_iabn(planes, planes, stride=1, act_layer="identity")
         self.relu = nn.ReLU(inplace=True)
@@ -88,11 +87,7 @@ class BasicBlock(nn.Module):
         self.se = SEModule(planes * self.expansion, rd_channels=rd_chs) if use_se else None
 
     def forward(self, x):
-        if self.downsample is not None:
-            shortcut = self.downsample(x)
-        else:
-            shortcut = x
-
+        shortcut = self.downsample(x) if self.downsample is not None else x
         out = self.conv1(x)
         out = self.conv2(out)
 
@@ -115,14 +110,13 @@ class Bottleneck(nn.Module):
         if stride == 1:
             self.conv2 = conv2d_iabn(
                 planes, planes, kernel_size=3, stride=1, act_layer=act_layer, act_param=1e-3)
+        elif aa_layer is None:
+            self.conv2 = conv2d_iabn(
+                planes, planes, kernel_size=3, stride=2, act_layer=act_layer, act_param=1e-3)
         else:
-            if aa_layer is None:
-                self.conv2 = conv2d_iabn(
-                    planes, planes, kernel_size=3, stride=2, act_layer=act_layer, act_param=1e-3)
-            else:
-                self.conv2 = nn.Sequential(
-                    conv2d_iabn(planes, planes, kernel_size=3, stride=1, act_layer=act_layer, act_param=1e-3),
-                    aa_layer(channels=planes, filt_size=3, stride=2))
+            self.conv2 = nn.Sequential(
+                conv2d_iabn(planes, planes, kernel_size=3, stride=1, act_layer=act_layer, act_param=1e-3),
+                aa_layer(channels=planes, filt_size=3, stride=2))
 
         reduction_chs = max(planes * self.expansion // 8, 64)
         self.se = SEModule(planes, rd_channels=reduction_chs) if use_se else None
@@ -135,11 +129,7 @@ class Bottleneck(nn.Module):
         self.stride = stride
 
     def forward(self, x):
-        if self.downsample is not None:
-            shortcut = self.downsample(x)
-        else:
-            shortcut = x
-
+        shortcut = self.downsample(x) if self.downsample is not None else x
         out = self.conv1(x)
         out = self.conv2(out)
         if self.se is not None:
@@ -198,7 +188,7 @@ class TResNet(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='leaky_relu')
-            elif isinstance(m, nn.BatchNorm2d) or isinstance(m, InplaceAbn):
+            elif isinstance(m, (nn.BatchNorm2d, InplaceAbn)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
@@ -226,9 +216,10 @@ class TResNet(nn.Module):
         layers.append(block(
             self.inplanes, planes, stride, downsample, use_se=use_se, aa_layer=aa_layer))
         self.inplanes = planes * block.expansion
-        for i in range(1, blocks):
-            layers.append(
-                block(self.inplanes, planes, use_se=use_se, aa_layer=aa_layer))
+        layers.extend(
+            block(self.inplanes, planes, use_se=use_se, aa_layer=aa_layer)
+            for _ in range(1, blocks)
+        )
         return nn.Sequential(*layers)
 
     def get_classifier(self):

@@ -25,9 +25,9 @@ class Adahessian(torch.optim.Optimizer):
 
     def __init__(self, params, lr=0.1, betas=(0.9, 0.999), eps=1e-8, weight_decay=0.0,
                  hessian_power=1.0, update_each=1, n_samples=1, avg_conv_kernel=False):
-        if not 0.0 <= lr:
+        if lr < 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")
-        if not 0.0 <= eps:
+        if eps < 0.0:
             raise ValueError(f"Invalid epsilon value: {eps}")
         if not 0.0 <= betas[0] < 1.0:
             raise ValueError(f"Invalid beta parameter at index 0: {betas[0]}")
@@ -83,7 +83,7 @@ class Adahessian(torch.optim.Optimizer):
                 params.append(p)
             self.state[p]["hessian step"] += 1
 
-        if len(params) == 0:
+        if not params:
             return
 
         if self.generator.device != params[0].device:  # hackish way of casting the generator to the right device
@@ -107,10 +107,7 @@ class Adahessian(torch.optim.Optimizer):
             closure (callable, optional) -- a closure that reevaluates the model and returns the loss (default: None)
         """
 
-        loss = None
-        if closure is not None:
-            loss = closure()
-
+        loss = closure() if closure is not None else None
         self.zero_hessian()
         self.set_hessian()
 

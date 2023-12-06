@@ -62,8 +62,8 @@ class CheckpointSaver:
 
     def save_checkpoint(self, epoch, metric=None):
         assert epoch >= 0
-        tmp_save_path = os.path.join(self.checkpoint_dir, 'tmp' + self.extension)
-        last_save_path = os.path.join(self.checkpoint_dir, 'last' + self.extension)
+        tmp_save_path = os.path.join(self.checkpoint_dir, f'tmp{self.extension}')
+        last_save_path = os.path.join(self.checkpoint_dir, f'last{self.extension}')
         self._save(tmp_save_path, epoch, metric)
         if os.path.exists(last_save_path):
             os.unlink(last_save_path)  # required for Windows support.
@@ -83,13 +83,15 @@ class CheckpointSaver:
 
             checkpoints_str = "Current checkpoints:\n"
             for c in self.checkpoint_files:
-                checkpoints_str += ' {}\n'.format(c)
+                checkpoints_str += f' {c}\n'
             _logger.info(checkpoints_str)
 
             if metric is not None and (self.best_metric is None or self.cmp(metric, self.best_metric)):
                 self.best_epoch = epoch
                 self.best_metric = metric
-                best_save_path = os.path.join(self.checkpoint_dir, 'model_best' + self.extension)
+                best_save_path = os.path.join(
+                    self.checkpoint_dir, f'model_best{self.extension}'
+                )
                 if os.path.exists(best_save_path):
                     os.unlink(best_save_path)
                 os.link(last_save_path, best_save_path)
@@ -123,10 +125,10 @@ class CheckpointSaver:
         to_delete = self.checkpoint_files[delete_index:]
         for d in to_delete:
             try:
-                _logger.debug("Cleaning checkpoint: {}".format(d))
+                _logger.debug(f"Cleaning checkpoint: {d}")
                 os.remove(d[0])
             except Exception as e:
-                _logger.error("Exception '{}' while deleting checkpoint".format(e))
+                _logger.error(f"Exception '{e}' while deleting checkpoint")
         self.checkpoint_files = self.checkpoint_files[:delete_index]
 
     def save_recovery(self, epoch, batch_idx=0):
@@ -136,15 +138,15 @@ class CheckpointSaver:
         self._save(save_path, epoch)
         if os.path.exists(self.last_recovery_file):
             try:
-                _logger.debug("Cleaning recovery: {}".format(self.last_recovery_file))
+                _logger.debug(f"Cleaning recovery: {self.last_recovery_file}")
                 os.remove(self.last_recovery_file)
             except Exception as e:
-                _logger.error("Exception '{}' while removing {}".format(e, self.last_recovery_file))
+                _logger.error(f"Exception '{e}' while removing {self.last_recovery_file}")
         self.last_recovery_file = self.curr_recovery_file
         self.curr_recovery_file = save_path
 
     def find_recovery(self):
         recovery_path = os.path.join(self.recovery_dir, self.recovery_prefix)
-        files = glob.glob(recovery_path + '*' + self.extension)
+        files = glob.glob(f'{recovery_path}*{self.extension}')
         files = sorted(files)
         return files[0] if len(files) else ''

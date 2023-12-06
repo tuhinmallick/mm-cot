@@ -84,11 +84,11 @@ class ConvRelPosEnc(nn.Module):
             self.window = window
         else:
             raise ValueError()            
-        
+
         self.conv_list = nn.ModuleList()
         self.head_splits = []
+        dilation = 1
         for cur_window, cur_head_split in window.items():
-            dilation = 1
             # Determine padding size.
             # Ref: https://discuss.pytorch.org/t/how-to-keep-the-shape-of-input-and-output-same-when-dilation-conv/14338
             padding_size = (cur_window + (cur_window - 1) * (dilation - 1)) // 2
@@ -113,9 +113,9 @@ class ConvRelPosEnc(nn.Module):
 
         v_img = v_img.transpose(-1, -2).reshape(B, h * Ch, H, W)
         v_img_list = torch.split(v_img, self.channel_splits, dim=1)  # Split according to channels
-        conv_v_img_list = []
-        for i, conv in enumerate(self.conv_list):
-            conv_v_img_list.append(conv(v_img_list[i]))
+        conv_v_img_list = [
+            conv(v_img_list[i]) for i, conv in enumerate(self.conv_list)
+        ]
         conv_v_img = torch.cat(conv_v_img_list, dim=1)
         conv_v_img = conv_v_img.reshape(B, h, Ch, H * W).transpose(-1, -2)
 
@@ -279,15 +279,13 @@ class ParallelBlock(nn.Module):
 
         cls_token = x[:, :1, :]
         img_tokens = x[:, 1:, :]
-        
+
         img_tokens = img_tokens.transpose(1, 2).reshape(B, C, H, W)
         img_tokens = F.interpolate(
             img_tokens, scale_factor=scale_factor, recompute_scale_factor=False, mode='bilinear', align_corners=False)
         img_tokens = img_tokens.reshape(B, C, -1).transpose(1, 2)
-        
-        out = torch.cat((cls_token, img_tokens), dim=1)
 
-        return out
+        return torch.cat((cls_token, img_tokens), dim=1)
 
     def forward(self, x1, x2, x3, x4, sizes: List[Tuple[int, int]]):
         _, S2, S3, S4 = sizes
@@ -375,7 +373,7 @@ class CoaT(nn.Module):
         # Disable stochastic depth.
         dpr = drop_path_rate
         assert dpr == 0.0
-        
+
         # Serial blocks 1.
         self.serial_blocks1 = nn.ModuleList([
             SerialBlock(
@@ -443,11 +441,7 @@ class CoaT(nn.Module):
                 # CoaT series: Aggregate features of last three scales for classification.
                 assert embed_dims[1] == embed_dims[2] == embed_dims[3]
                 self.aggregate = torch.nn.Conv1d(in_channels=3, out_channels=1, kernel_size=1)
-                self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
-            else:
-                # CoaT-Lite series: Use feature of last scale for classification.
-                self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
-
+            self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
         # Initialize weights.
         trunc_normal_(self.cls_token1, std=.02)
         trunc_normal_(self.cls_token2, std=.02)
@@ -496,7 +490,7 @@ class CoaT(nn.Module):
             x1 = blk(x1, size=(H1, W1))
         x1_nocls = self.remove_cls(x1)
         x1_nocls = x1_nocls.reshape(B, H1, W1, -1).permute(0, 3, 1, 2).contiguous()
-        
+
         # Serial blocks 2.
         x2 = self.patch_embed2(x1_nocls)
         H2, W2 = self.patch_embed2.grid_size
@@ -524,11 +518,10 @@ class CoaT(nn.Module):
         x4_nocls = self.remove_cls(x4)
         x4_nocls = x4_nocls.reshape(B, H4, W4, -1).permute(0, 3, 1, 2).contiguous()
 
-        # Only serial blocks: Early return.
         if self.parallel_blocks is None:
             if not torch.jit.is_scripting() and self.return_interm_layers:
                 # Return intermediate features for down-stream tasks (e.g. Deformable DETR and Detectron2).
-                feat_out = {}   
+                feat_out = {}
                 if 'x1_nocls' in self.out_features:
                     feat_out['x1_nocls'] = x1_nocls
                 if 'x2_nocls' in self.out_features:
@@ -541,9 +534,7 @@ class CoaT(nn.Module):
             else:
                 # Return features for classification.
                 x4 = self.norm4(x4)
-                x4_cls = x4[:, 0]
-                return x4_cls
-
+                return x4[:, 0]
         # Parallel blocks.
         for blk in self.parallel_blocks:
             x2, x3, x4 = self.cpe2(x2, (H2, W2)), self.cpe3(x3, (H3, W3)), self.cpe4(x4, (H4, W4))
@@ -584,35 +575,34 @@ class CoaT(nn.Module):
         if self.return_interm_layers:
             # Return intermediate features (for down-stream tasks).
             return self.forward_features(x)
-        else:
-            # Return features for classification.
-            x = self.forward_features(x) 
-            x = self.head(x)
-            return x
+        # Return features for classification.
+        x = self.forward_features(x)
+        x = self.head(x)
+        return x
 
 
 def checkpoint_filter_fn(state_dict, model):
-    out_dict = {}
-    for k, v in state_dict.items():
-        # original model had unused norm layers, removing them requires filtering pretrained checkpoints
-        if k.startswith('norm1') or \
-                (model.norm2 is None and k.startswith('norm2')) or \
-                (model.norm3 is None and k.startswith('norm3')):
-            continue
-        out_dict[k] = v
-    return out_dict
+    return {
+        k: v
+        for k, v in state_dict.items()
+        if not k.startswith('norm1')
+        and (model.norm2 is not None or not k.startswith('norm2'))
+        and (model.norm3 is not None or not k.startswith('norm3'))
+    }
 
 
 def _create_coat(variant, pretrained=False, default_cfg=None, **kwargs):
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
-    model = build_model_with_cfg(
-        CoaT, variant, pretrained,
+    return build_model_with_cfg(
+        CoaT,
+        variant,
+        pretrained,
         default_cfg=default_cfgs[variant],
         pretrained_filter_fn=checkpoint_filter_fn,
-        **kwargs)
-    return model
+        **kwargs
+    )
 
 
 @register_model
@@ -620,8 +610,7 @@ def coat_tiny(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=4, embed_dims=[152, 152, 152, 152], serial_depths=[2, 2, 2, 2], parallel_depth=6,
         num_heads=8, mlp_ratios=[4, 4, 4, 4], **kwargs)
-    model = _create_coat('coat_tiny', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_coat('coat_tiny', pretrained=pretrained, **model_cfg)
 
 
 @register_model
@@ -629,8 +618,7 @@ def coat_mini(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=4, embed_dims=[152, 216, 216, 216], serial_depths=[2, 2, 2, 2], parallel_depth=6,
         num_heads=8, mlp_ratios=[4, 4, 4, 4], **kwargs)
-    model = _create_coat('coat_mini', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_coat('coat_mini', pretrained=pretrained, **model_cfg)
 
 
 @register_model
@@ -638,8 +626,7 @@ def coat_lite_tiny(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=4, embed_dims=[64, 128, 256, 320], serial_depths=[2, 2, 2, 2], parallel_depth=0,
         num_heads=8, mlp_ratios=[8, 8, 4, 4], **kwargs)
-    model = _create_coat('coat_lite_tiny', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_coat('coat_lite_tiny', pretrained=pretrained, **model_cfg)
 
 
 @register_model
@@ -647,8 +634,7 @@ def coat_lite_mini(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=4, embed_dims=[64, 128, 320, 512], serial_depths=[2, 2, 2, 2], parallel_depth=0,
         num_heads=8, mlp_ratios=[8, 8, 4, 4], **kwargs)
-    model = _create_coat('coat_lite_mini', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_coat('coat_lite_mini', pretrained=pretrained, **model_cfg)
 
 
 @register_model
@@ -656,5 +642,4 @@ def coat_lite_small(pretrained=False, **kwargs):
     model_cfg = dict(
         patch_size=4, embed_dims=[64, 128, 320, 512], serial_depths=[3, 4, 6, 3], parallel_depth=0,
         num_heads=8, mlp_ratios=[8, 8, 4, 4], **kwargs)
-    model = _create_coat('coat_lite_small', pretrained=pretrained, **model_cfg)
-    return model
+    return _create_coat('coat_lite_small', pretrained=pretrained, **model_cfg)

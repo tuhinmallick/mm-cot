@@ -43,9 +43,7 @@ def caculate_bleu(results, data, gram):
         bleu = bleu_score(target, prediction, gram)
         bleus.append(bleu)
 
-    avg_bleu = sum(bleus) / len(bleus)
-
-    return avg_bleu
+    return sum(bleus) / len(bleus)
 
 
 ########################
@@ -54,8 +52,7 @@ def caculate_bleu(results, data, gram):
 def score_rouge(str1, str2):
     rouge = Rouge(metrics=["rouge-l"])
     scores = rouge.get_scores(str1, str2, avg=True)
-    rouge_l = scores['rouge-l']['f']
-    return rouge_l
+    return scores['rouge-l']['f']
 
 
 def caculate_rouge(results, data):
@@ -71,8 +68,7 @@ def caculate_rouge(results, data):
         rouge = score_rouge(target, prediction)
         rouges.append(rouge)
 
-    avg_rouge = sum(rouges) / len(rouges)
-    return avg_rouge
+    return sum(rouges) / len(rouges)
 
 
 ########################
@@ -82,8 +78,7 @@ def similariry_score(str1, str2, model):
     # compute embedding for both lists
     embedding_1 = model.encode(str1, convert_to_tensor=True)
     embedding_2 = model.encode(str2, convert_to_tensor=True)
-    score = util.pytorch_cos_sim(embedding_1, embedding_2).item()
-    return score
+    return util.pytorch_cos_sim(embedding_1, embedding_2).item()
 
 
 def caculate_similariry(results, data, model):
@@ -96,5 +91,4 @@ def caculate_similariry(results, data, model):
         score = similariry_score(target, prediction, model)
         scores.append(score)
 
-    avg_score = sum(scores) / len(scores)
-    return avg_score
+    return sum(scores) / len(scores)

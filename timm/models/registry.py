@@ -123,17 +123,19 @@ def is_model_in_modules(model_name, module_names):
 def has_model_default_key(model_name, cfg_key):
     """ Query model default_cfgs for existence of a specific key.
     """
-    if model_name in _model_default_cfgs and cfg_key in _model_default_cfgs[model_name]:
-        return True
-    return False
+    return (
+        model_name in _model_default_cfgs
+        and cfg_key in _model_default_cfgs[model_name]
+    )
 
 
 def is_model_default_key(model_name, cfg_key):
     """ Return truthy value for specified model default_cfg key, False if does not exist.
     """
-    if model_name in _model_default_cfgs and _model_default_cfgs[model_name].get(cfg_key, False):
-        return True
-    return False
+    return bool(
+        model_name in _model_default_cfgs
+        and _model_default_cfgs[model_name].get(cfg_key, False)
+    )
 
 
 def get_model_default_value(model_name, cfg_key):

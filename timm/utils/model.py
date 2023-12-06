@@ -57,7 +57,7 @@ class ActivationStatsHook:
         if len(hook_fn_locs) != len(hook_fns):
             raise ValueError("Please provide `hook_fns` for each `hook_fn_locs`, \
                 their lengths are different.")
-        self.stats = dict((hook_fn.__name__, []) for hook_fn in hook_fns)
+        self.stats = {hook_fn.__name__: [] for hook_fn in hook_fns}
         for hook_fn_loc, hook_fn in zip(hook_fn_locs, hook_fns): 
             self.register_hook(hook_fn_loc, hook_fn)
 

@@ -43,7 +43,7 @@ def download_cached_file(url, check_hash=True, progress=False):
     filename = os.path.basename(parts.path)
     cached_file = os.path.join(get_cache_dir(), filename)
     if not os.path.exists(cached_file):
-        _logger.info('Downloading: "{}" to {}\n'.format(url, cached_file))
+        _logger.info(f'Downloading: "{url}" to {cached_file}\n')
         hash_prefix = None
         if check_hash:
             r = HASH_REGEX.search(filename)  # r is Optional[Match[str]]
@@ -92,5 +92,4 @@ def load_model_config_from_hf(model_id: str):
 def load_state_dict_from_hf(model_id: str):
     assert has_hf_hub(True)
     cached_file = _download_from_hf(model_id, 'pytorch_model.bin')
-    state_dict = torch.load(cached_file, map_location='cpu')
-    return state_dict
+    return torch.load(cached_file, map_location='cpu')

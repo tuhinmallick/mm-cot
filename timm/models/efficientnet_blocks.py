@@ -61,11 +61,13 @@ class ConvBnAct(nn.Module):
         self.act1 = act_layer(inplace=True)
 
     def feature_info(self, location):
-        if location == 'expansion':  # output of conv after act, same as block coutput
-            info = dict(module='act1', hook_type='forward', num_chs=self.conv.out_channels)
-        else:  # location == 'bottleneck', block output
-            info = dict(module='', hook_type='', num_chs=self.conv.out_channels)
-        return info
+        return (
+            dict(
+                module='act1', hook_type='forward', num_chs=self.conv.out_channels
+            )
+            if location == 'expansion'
+            else dict(module='', hook_type='', num_chs=self.conv.out_channels)
+        )
 
     def forward(self, x):
         shortcut = x
@@ -106,11 +108,15 @@ class DepthwiseSeparableConv(nn.Module):
         self.act2 = act_layer(inplace=True) if self.has_pw_act else nn.Identity()
 
     def feature_info(self, location):
-        if location == 'expansion':  # after SE, input to PW
-            info = dict(module='conv_pw', hook_type='forward_pre', num_chs=self.conv_pw.in_channels)
-        else:  # location == 'bottleneck', block output
-            info = dict(module='', hook_type='', num_chs=self.conv_pw.out_channels)
-        return info
+        return (
+            dict(
+                module='conv_pw',
+                hook_type='forward_pre',
+                num_chs=self.conv_pw.in_channels,
+            )
+            if location == 'expansion'
+            else dict(module='', hook_type='', num_chs=self.conv_pw.out_channels)
+        )
 
     def forward(self, x):
         shortcut = x
@@ -172,11 +178,15 @@ class InvertedResidual(nn.Module):
         self.bn3 = norm_layer(out_chs)
 
     def feature_info(self, location):
-        if location == 'expansion':  # after SE, input to PWL
-            info = dict(module='conv_pwl', hook_type='forward_pre', num_chs=self.conv_pwl.in_channels)
-        else:  # location == 'bottleneck', block output
-            info = dict(module='', hook_type='', num_chs=self.conv_pwl.out_channels)
-        return info
+        return (
+            dict(
+                module='conv_pwl',
+                hook_type='forward_pre',
+                num_chs=self.conv_pwl.in_channels,
+            )
+            if location == 'expansion'
+            else dict(module='', hook_type='', num_chs=self.conv_pwl.out_channels)
+        )
 
     def forward(self, x):
         shortcut = x
@@ -295,11 +305,15 @@ class EdgeResidual(nn.Module):
         self.bn2 = norm_layer(out_chs)
 
     def feature_info(self, location):
-        if location == 'expansion':  # after SE, before PWL
-            info = dict(module='conv_pwl', hook_type='forward_pre', num_chs=self.conv_pwl.in_channels)
-        else:  # location == 'bottleneck', block output
-            info = dict(module='', hook_type='', num_chs=self.conv_pwl.out_channels)
-        return info
+        return (
+            dict(
+                module='conv_pwl',
+                hook_type='forward_pre',
+                num_chs=self.conv_pwl.in_channels,
+            )
+            if location == 'expansion'
+            else dict(module='', hook_type='', num_chs=self.conv_pwl.out_channels)
+        )
 
     def forward(self, x):
         shortcut = x

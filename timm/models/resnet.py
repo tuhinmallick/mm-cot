@@ -275,8 +275,7 @@ default_cfgs = {
 
 
 def get_padding(kernel_size, stride, dilation=1):
-    padding = ((stride - 1) + dilation * (kernel_size - 1)) // 2
-    return padding
+    return ((stride - 1) + dilation * (kernel_size - 1)) // 2
 
 
 class BasicBlock(nn.Module):
@@ -615,14 +614,13 @@ class ResNet(nn.Module):
                 norm_layer(inplanes),
                 act_layer(inplace=True)
             ]))
-        else:
-            if aa_layer is not None:
-                self.maxpool = nn.Sequential(*[
-                    nn.MaxPool2d(kernel_size=3, stride=1, padding=1),
-                    aa_layer(channels=inplanes, stride=2)])
-            else:
-                self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        elif aa_layer is None:
+            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
+        else:
+            self.maxpool = nn.Sequential(*[
+                nn.MaxPool2d(kernel_size=3, stride=1, padding=1),
+                aa_layer(channels=inplanes, stride=2)])
         # Feature Blocks
         channels = [64, 128, 256, 512]
         stage_modules, stage_feature_info = make_blocks(

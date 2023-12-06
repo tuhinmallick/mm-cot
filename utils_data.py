@@ -21,9 +21,9 @@ def load_data_std(args):
     for qid in problems:
         problems[qid]['caption'] = captions[qid] if qid in captions else ""
 
-    train_qids = pid_splits['%s' % (args.train_split)]
-    val_qids = pid_splits['%s' % (args.val_split)]
-    test_qids = pid_splits['%s' % (args.test_split)]
+    train_qids = pid_splits[f'{args.train_split}']
+    val_qids = pid_splits[f'{args.val_split}']
+    test_qids = pid_splits[f'{args.test_split}']
     print(f"number of train problems: {len(train_qids)}\n")
     print(f"number of val problems: {len(val_qids)}\n")
     print(f"number of test problems: {len(test_qids)}\n")
@@ -44,20 +44,18 @@ def load_data_img(args):
         image_features = image_features.repeat(512, axis=1)
     elif args.img_type == "clip":
         image_features = np.load('vision_features/clip.npy')
-    elif args.img_type == "detr":
+    elif args.img_type == "detr" or args.img_type != "vit":
         image_features = np.load('vision_features/detr.npy')
-    elif args.img_type == "vit":
-        image_features = torch.load("vision_features/vit.pth")
     else:
-        image_features = np.load('vision_features/detr.npy')
+        image_features = torch.load("vision_features/vit.pth")
     print("img_features size: ", image_features.shape)
 
     for qid in problems:
         problems[qid]['caption'] = captions[qid] if qid in captions else ""
 
-    train_qids = pid_splits['%s' % (args.train_split)]
-    val_qids = pid_splits['%s' % (args.val_split)]
-    test_qids = pid_splits['%s' % (args.test_split)]
+    train_qids = pid_splits[f'{args.train_split}']
+    val_qids = pid_splits[f'{args.val_split}']
+    test_qids = pid_splits[f'{args.test_split}']
     print(f"number of train problems: {len(train_qids)}\n")
     print(f"number of val problems: {len(val_qids)}\n")
     print(f"number of test problems: {len(test_qids)}\n")
@@ -82,10 +80,7 @@ class ScienceQADatasetStd(Dataset):
         self.summ_len = target_len
         self.target_text = []
         self.source_text = []
-        if test_le is not None:
-            test_le_data =json.load(open(test_le))["preds"]
-        else:
-            test_le_data = None
+        test_le_data = None if test_le is None else json.load(open(test_le))["preds"]
         idx = 0
         for qid in self.data:
             if test_le_data is not None:
@@ -164,10 +159,7 @@ class ScienceQADatasetImg(Dataset):
         self.target_text = []
         self.source_text = []
         self.image_ids = []
-        if test_le is not None:
-            test_le_data =json.load(open(test_le))["preds"]
-        else:
-            test_le_data = None
+        test_le_data = None if test_le is None else json.load(open(test_le))["preds"]
         idx = 0
         for qid in self.data:
             if test_le_data is not None:

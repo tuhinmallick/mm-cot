@@ -194,11 +194,12 @@ class OsaBlock(nn.Module):
             self.conv_reduction = None
 
         mid_convs = []
-        for i in range(layer_per_block):
-            if self.depthwise:
-                conv = SeparableConvBnAct(mid_chs, mid_chs, **conv_kwargs)
-            else:
-                conv = ConvBnAct(next_in_chs, mid_chs, 3, **conv_kwargs)
+        for _ in range(layer_per_block):
+            conv = (
+                SeparableConvBnAct(mid_chs, mid_chs, **conv_kwargs)
+                if self.depthwise
+                else ConvBnAct(next_in_chs, mid_chs, 3, **conv_kwargs)
+            )
             next_in_chs = mid_chs
             mid_convs.append(conv)
         self.conv_mid = SequentialAppendList(*mid_convs)
@@ -207,11 +208,7 @@ class OsaBlock(nn.Module):
         next_in_chs = in_chs + layer_per_block * mid_chs
         self.conv_concat = ConvBnAct(next_in_chs, out_chs, **conv_kwargs)
 
-        if attn:
-            self.attn = create_attn(attn, out_chs)
-        else:
-            self.attn = None
-
+        self.attn = create_attn(attn, out_chs) if attn else None
         self.drop_path = drop_path
 
     def forward(self, x):

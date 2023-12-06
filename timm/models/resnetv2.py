@@ -292,7 +292,7 @@ class ResNetStage(nn.Module):
 
 
 def is_stem_deep(stem_type):
-    return any([s in stem_type for s in ('deep', 'tiered')])
+    return any(s in stem_type for s in ('deep', 'tiered'))
 
 
 def create_resnetv2_stem(

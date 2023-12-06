@@ -315,7 +315,7 @@ class Twins(nn.Module):
 
     @torch.jit.ignore
     def no_weight_decay(self):
-        return set(['pos_block.' + n for n, p in self.pos_block.named_parameters()])
+        return {f'pos_block.{n}' for n, p in self.pos_block.named_parameters()}
 
     def get_classifier(self):
         return self.head
@@ -367,11 +367,9 @@ def _create_twins(variant, pretrained=False, **kwargs):
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
-    model = build_model_with_cfg(
-        Twins, variant, pretrained,
-        default_cfg=default_cfgs[variant],
-        **kwargs)
-    return model
+    return build_model_with_cfg(
+        Twins, variant, pretrained, default_cfg=default_cfgs[variant], **kwargs
+    )
 
 
 @register_model
